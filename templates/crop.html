@@ -1,0 +1,822 @@
+{% extends "base.html" %}
+{% block title %}Crop Recommendation — CropSense AI{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+.crop-page { font-family:'Inter',sans-serif; }
+
+.crop-hero {
+  background: linear-gradient(135deg, #0a2e1a, #1b4332, #2d6a4f);
+  border-radius: 24px;
+  padding: 2rem 2.5rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.crop-hero::before { content:'🌱';position:absolute;font-size:8rem;right:-1rem;top:-1rem;opacity:0.08; }
+.crop-hero-title { font-size:1.6rem;font-weight:900;letter-spacing:-0.5px; }
+.crop-hero-sub   { font-size:0.88rem;opacity:0.75;margin-top:4px; }
+.crop-hero-badge {
+  background:rgba(116,198,157,0.2);
+  border:1px solid rgba(116,198,157,0.3);
+  border-radius:20px;
+  padding:8px 18px;
+  font-size:0.82rem;
+  font-weight:600;
+  color:#74c69d;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.crop-grid {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.form-card {
+  background:white;
+  border-radius:20px;
+  border:1.5px solid #e8f5e9;
+  overflow:hidden;
+  box-shadow:0 4px 20px rgba(45,106,79,0.06);
+}
+.form-card-header {
+  background:linear-gradient(135deg,#f0faf4,#e8f5e9);
+  padding:1.2rem 1.5rem;
+  border-bottom:1px solid #e8f5e9;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.form-card-header-icon {
+  width:40px;height:40px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.2rem;
+}
+.form-card-header-title { font-size:1rem;font-weight:800;color:#0a2e1a; }
+.form-card-header-sub   { font-size:0.75rem;color:#52796f; }
+.form-card-body { padding:1.5rem; }
+
+.field-group { margin-bottom:1.1rem; }
+.field-label {
+  display:block;
+  font-size:0.72rem;
+  font-weight:700;
+  color:#52796f;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  margin-bottom:5px;
+}
+.field-input {
+  width:100%;
+  padding:11px 14px;
+  border:1.5px solid #e8f5e9;
+  border-radius:10px;
+  font-family:'Inter',sans-serif;
+  font-size:0.88rem;
+  color:#1b4332;
+  background:#f8fffe;
+  transition:all 0.2s;
+  outline:none;
+}
+.field-input:focus { border-color:#2d6a4f;background:white;box-shadow:0 0 0 3px rgba(45,106,79,0.08); }
+.field-input::placeholder { color:#b0c4ba; }
+.fields-row { display:grid;grid-template-columns:1fr 1fr;gap:1rem; }
+
+.crop-submit {
+  width:100%;
+  padding:14px;
+  background:linear-gradient(135deg,#1b4332,#2d6a4f);
+  color:white;
+  border:none;
+  border-radius:12px;
+  font-family:'Inter',sans-serif;
+  font-size:0.95rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.25s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  box-shadow:0 6px 20px rgba(45,106,79,0.25);
+  margin-bottom:0.75rem;
+}
+.crop-submit:hover { transform:translateY(-2px);box-shadow:0 10px 28px rgba(45,106,79,0.35); }
+
+.result-side { display:flex;flex-direction:column;gap:1.2rem; }
+
+.empty-state {
+  background:white;
+  border-radius:20px;
+  border:1.5px dashed #b7e4c7;
+  padding:3rem 2rem;
+  text-align:center;
+}
+.empty-icon  { font-size:3.5rem;margin-bottom:1rem; }
+.empty-title { font-size:1rem;font-weight:700;color:#1b4332;margin-bottom:0.4rem; }
+.empty-sub   { font-size:0.85rem;color:#52796f;line-height:1.6; }
+
+.loading-card {
+  background:white;
+  border-radius:20px;
+  border:1.5px solid #e8f5e9;
+  padding:3rem 2rem;
+  text-align:center;
+}
+.loading-spinner {
+  width:48px;height:48px;
+  border:4px solid #e8f5e9;
+  border-top-color:#2d6a4f;
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+  margin:0 auto 1rem;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+.result-hero {
+  background:linear-gradient(135deg,#0a2e1a,#1b4332,#2d6a4f);
+  border-radius:20px;
+  padding:2rem;
+  color:white;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+  animation:fadeIn 0.5s ease;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.result-hero::before {
+  content:'';position:absolute;
+  width:200px;height:200px;
+  background:rgba(116,198,157,0.1);
+  border-radius:50%;top:-60px;right:-60px;
+}
+.result-crop-icon { font-size:4rem;margin-bottom:0.5rem; }
+.result-crop-name { font-size:2.2rem;font-weight:900;letter-spacing:-1px;margin-bottom:0.75rem; }
+.result-pills { display:flex;justify-content:center;flex-wrap:wrap;gap:0.5rem; }
+.result-pill {
+  background:rgba(255,255,255,0.15);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:20px;
+  padding:5px 14px;
+  font-size:0.78rem;
+  font-weight:600;
+}
+
+.info-card { background:white;border-radius:16px;border:1.5px solid #e8f5e9;overflow:hidden; }
+.info-card-header {
+  padding:1rem 1.2rem;
+  border-bottom:1px solid #e8f5e9;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#f8fffe;
+}
+.info-card-icon { width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem; }
+.info-card-title { font-size:0.88rem;font-weight:800;color:#0a2e1a; }
+.info-card-body  { padding:1.2rem; }
+
+.detail-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:9px 0;
+  border-bottom:1px solid #f0faf4;
+  font-size:0.85rem;
+}
+.detail-row:last-child { border:none; }
+.detail-key   { color:#52796f;font-weight:500;display:flex;align-items:center;gap:6px; }
+.detail-value { font-weight:700;color:#1b4332; }
+
+.warning-box {
+  background:#fff8e1;
+  border:1px solid #ffe082;
+  border-radius:10px;
+  padding:10px 14px;
+  font-size:0.8rem;
+  color:#856404;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:1rem;
+}
+
+/* Mode Toggle */
+.mode-toggle {
+  display:flex;
+  background:#f0faf4;
+  border-radius:12px;
+  padding:4px;
+  margin-bottom:1.2rem;
+}
+.mode-btn {
+  flex:1;
+  padding:10px;
+  border-radius:9px;
+  border:none;
+  background:transparent;
+  font-family:'Inter',sans-serif;
+  font-size:0.82rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.2s;
+  color:#52796f;
+}
+.mode-btn.active {
+  background:linear-gradient(135deg,#1b4332,#2d6a4f);
+  color:white;
+  box-shadow:0 4px 12px rgba(45,106,79,0.25);
+}
+
+/* Preset buttons */
+.preset-btn {
+  padding:5px 12px;
+  background:#f0faf4;
+  border:1.5px solid #d8f3dc;
+  border-radius:8px;
+  font-size:0.72rem;
+  font-weight:600;
+  color:#2d6a4f;
+  cursor:pointer;
+  font-family:'Inter',sans-serif;
+  transition:all 0.2s;
+}
+.preset-btn:hover { background:#2d6a4f;color:white;border-color:#2d6a4f; }
+
+/* Confidence bar */
+.conf-bar-wrap {
+  background:#f0faf4;
+  border-radius:6px;
+  height:8px;
+  overflow:hidden;
+  margin-top:4px;
+}
+.conf-bar {
+  height:100%;
+  background:linear-gradient(90deg,#2d6a4f,#74c69d);
+  border-radius:6px;
+  transition:width 1s ease;
+}
+
+@media(max-width:900px) { .crop-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="crop-page">
+
+  <!-- Hero -->
+  <div class="crop-hero">
+    <div>
+      <div class="crop-hero-title">🌱 Crop Recommendation</div>
+      <div class="crop-hero-sub">ML Model (99.55% accurate) + AI powered suggestions</div>
+    </div>
+    <div class="crop-hero-badge">
+      <span>🧪</span> Scikit-learn + Gemini AI
+    </div>
+  </div>
+
+  <div class="crop-grid">
+
+    <!-- ── FORM ── -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="form-card-header-icon" style="background:#2d6a4f;">📋</div>
+        <div>
+          <div class="form-card-header-title">Enter Farm Details</div>
+          <div class="form-card-header-sub">More data = better accuracy</div>
+        </div>
+      </div>
+      <div class="form-card-body">
+
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="btnML" onclick="switchMode('ml')">
+            🧪 ML Model (NPK)
+          </button>
+          <button class="mode-btn" id="btnSimple" onclick="switchMode('simple')">
+            🌍 Simple (Soil+Season)
+          </button>
+        </div>
+
+        <!-- ML MODE -->
+        <div id="mlMode">
+          <div class="fields-row">
+            <div class="field-group">
+              <label class="field-label">🟦 Nitrogen (N)</label>
+              <input type="number" id="mlN" class="field-input" placeholder="0–140" value="90" min="0" max="140"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">🟧 Phosphorus (P)</label>
+              <input type="number" id="mlP" class="field-input" placeholder="5–145" value="42" min="0" max="145"/>
+            </div>
+          </div>
+          <div class="fields-row">
+            <div class="field-group">
+              <label class="field-label">🟩 Potassium (K)</label>
+              <input type="number" id="mlK" class="field-input" placeholder="5–205" value="43" min="0" max="205"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">🌡️ Temperature (°C)</label>
+              <input type="number" id="mlTemp" class="field-input" placeholder="8–43" value="20" step="0.1"/>
+            </div>
+          </div>
+          <div class="fields-row">
+            <div class="field-group">
+              <label class="field-label">💧 Humidity (%)</label>
+              <input type="number" id="mlHumidity" class="field-input" placeholder="14–99" value="82" step="0.1"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">⚗️ pH Level</label>
+              <input type="number" id="mlPh" class="field-input" placeholder="3.5–9.9" value="6.5" step="0.1"/>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">🌧️ Rainfall (mm/year)</label>
+            <input type="number" id="mlRainfall" class="field-input" placeholder="20–298" value="202" step="0.1"/>
+          </div>
+
+          <!-- Presets -->
+          <div style="margin-bottom:1rem;">
+            <div style="font-size:0.7rem;font-weight:700;color:#52796f;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">
+              Quick Presets
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+              <button class="preset-btn" onclick="setPreset(90,42,43,20.87,82,6.5,202)">🌾 Rice</button>
+              <button class="preset-btn" onclick="setPreset(20,50,50,25,80,6.5,150)">🌿 Wheat</button>
+              <button class="preset-btn" onclick="setPreset(40,30,30,30,50,7,50)">🌸 Cotton</button>
+              <button class="preset-btn" onclick="setPreset(100,60,50,27,90,5.5,250)">🍌 Banana</button>
+              <button class="preset-btn" onclick="setPreset(20,30,20,25,65,7.5,90)">🫘 Chickpea</button>
+              <button class="preset-btn" onclick="setPreset(120,60,40,30,70,6,200)">🎋 Sugarcane</button>
+            </div>
+          </div>
+
+          <button class="crop-submit" onclick="getMLCrop()">
+            🧪 Predict with ML Model (99.55% accurate)
+          </button>
+        </div>
+
+        <!-- SIMPLE MODE -->
+        <div id="simpleMode" style="display:none;">
+          <div class="field-group">
+            <label class="field-label">🌍 Soil Type</label>
+            <select id="soilType" class="field-input">
+              <option value="">-- Select soil type --</option>
+              <option value="alluvial">Alluvial Soil</option>
+              <option value="black">Black Cotton Soil</option>
+              <option value="red">Red Soil</option>
+              <option value="sandy">Sandy Soil</option>
+              <option value="clay">Clay Soil</option>
+              <option value="loamy">Loamy Soil</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">🗓️ Growing Season</label>
+            <select id="season" class="field-input">
+              <option value="">-- Select season --</option>
+              <option value="kharif">Kharif (June – October)</option>
+              <option value="rabi">Rabi (October – March)</option>
+              <option value="zaid">Zaid (March – June)</option>
+            </select>
+          </div>
+          <div class="fields-row">
+            <div class="field-group">
+              <label class="field-label">🌡️ Temperature (°C)</label>
+              <input type="number" id="temperature" class="field-input" placeholder="e.g. 28"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">💧 Humidity (%)</label>
+              <input type="number" id="humidity" class="field-input" placeholder="e.g. 65"/>
+            </div>
+          </div>
+          <div class="fields-row">
+            <div class="field-group">
+              <label class="field-label">🌧️ Rainfall (mm/yr)</label>
+              <input type="number" id="rainfall" class="field-input" placeholder="e.g. 800"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">📍 State</label>
+              <select id="state" class="field-input">
+                <option value="">-- State --</option>
+                <option>Maharashtra</option>
+                <option>Punjab</option>
+                <option>Uttar Pradesh</option>
+                <option>Madhya Pradesh</option>
+                <option>Rajasthan</option>
+                <option>Gujarat</option>
+                <option>Karnataka</option>
+                <option>Tamil Nadu</option>
+                <option>Andhra Pradesh</option>
+                <option>West Bengal</option>
+                <option>Bihar</option>
+                <option>Haryana</option>
+              </select>
+            </div>
+          </div>
+          <button class="crop-submit" onclick="getSimpleCrop()">
+            🌱 Get Recommendation
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── RIGHT SIDE ── -->
+    <div class="result-side">
+
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🌾</div>
+        <div class="empty-title">Ready to Recommend!</div>
+        <div class="empty-sub">
+          Choose ML Model for highest accuracy<br/>
+          or Simple mode for quick suggestions
+        </div>
+        <div style="margin-top:1rem;display:flex;justify-content:center;gap:0.5rem;flex-wrap:wrap;">
+          <span style="background:#d8f3dc;color:#1b4332;padding:4px 10px;border-radius:8px;font-size:0.72rem;font-weight:600;">22 Crops</span>
+          <span style="background:#d8f3dc;color:#1b4332;padding:4px 10px;border-radius:8px;font-size:0.72rem;font-weight:600;">2200 Samples</span>
+          <span style="background:#d8f3dc;color:#1b4332;padding:4px 10px;border-radius:8px;font-size:0.72rem;font-weight:600;">99.55% Accuracy</span>
+        </div>
+      </div>
+
+      <div class="loading-card" id="cropLoading" style="display:none;">
+        <div class="loading-spinner"></div>
+        <div style="font-weight:700;color:#1b4332;margin-bottom:4px;" id="loadingText">
+          Analyzing Your Data...
+        </div>
+        <div style="font-size:0.82rem;color:#52796f;" id="loadingSubText">
+          ML Model processing 100 decision trees
+        </div>
+      </div>
+
+      <div id="cropResult" style="display:none;">
+
+        <div class="result-hero">
+          <div class="result-crop-icon" id="cropIcon">🌾</div>
+          <div class="result-crop-name" id="cropName">--</div>
+          <div class="result-pills" id="cropPills"></div>
+        </div>
+
+        <!-- Top 3 (ML only) -->
+        <div class="info-card" id="top3Card" style="display:none;">
+          <div class="info-card-header">
+            <div class="info-card-icon" style="background:#e8f0fe;">🏆</div>
+            <div class="info-card-title">Top 3 Recommendations</div>
+          </div>
+          <div class="info-card-body" id="top3Body"></div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-header">
+            <div class="info-card-icon" style="background:#d8f3dc;">📊</div>
+            <div class="info-card-title">Crop Details</div>
+          </div>
+          <div class="info-card-body" id="cropDetails"></div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-header">
+            <div class="info-card-icon" style="background:#fff3cd;">💊</div>
+            <div class="info-card-title">Fertilizer Recommendation</div>
+          </div>
+          <div class="info-card-body" id="fertilizerAdvice"></div>
+        </div>
+
+      </div>
+
+      <div id="cropError" style="display:none;">
+        <div style="background:#ffe0e0;border:1.5px solid #ffb3b3;border-radius:16px;
+                    padding:1.2rem;color:#7d0000;font-size:0.88rem;">
+          ❌ Please fill all required fields!
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── MODE TOGGLE ──────────────────────────────────
+let currentMode = 'ml';
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('mlMode').style.display     = mode === 'ml' ? 'block' : 'none';
+  document.getElementById('simpleMode').style.display = mode === 'simple' ? 'block' : 'none';
+  document.getElementById('btnML').classList.toggle('active',     mode === 'ml');
+  document.getElementById('btnSimple').classList.toggle('active', mode === 'simple');
+  resetResult();
+}
+
+function resetResult() {
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('cropResult').style.display = 'none';
+  document.getElementById('cropError').style.display  = 'none';
+}
+
+// ── PRESETS ──────────────────────────────────────
+function setPreset(n,p,k,temp,hum,ph,rain) {
+  document.getElementById('mlN').value        = n;
+  document.getElementById('mlP').value        = p;
+  document.getElementById('mlK').value        = k;
+  document.getElementById('mlTemp').value     = temp;
+  document.getElementById('mlHumidity').value = hum;
+  document.getElementById('mlPh').value       = ph;
+  document.getElementById('mlRainfall').value = rain;
+  if (typeof showToast === 'function') showToast('Preset loaded! Click Predict now.', 'info');
+}
+
+// ── CROP ICONS ───────────────────────────────────
+const cropIcons = {
+  rice:'🌾',wheat:'🌿',maize:'🌽',cotton:'🌸',sugarcane:'🎋',
+  chickpea:'🫘',kidneybeans:'🫘',pigeonpeas:'🫘',mothbeans:'🫘',
+  mungbean:'🫘',blackgram:'🫘',lentil:'🫘',pomegranate:'🍎',
+  banana:'🍌',mango:'🥭',grapes:'🍇',watermelon:'🍉',
+  muskmelon:'🍈',apple:'🍎',orange:'🍊',papaya:'🧡',
+  coconut:'🥥',jute:'🌿',coffee:'☕'
+};
+
+// ── ML PREDICTION ────────────────────────────────
+async function getMLCrop() {
+  const payload = {
+    N:           parseFloat(document.getElementById('mlN').value)        || 0,
+    P:           parseFloat(document.getElementById('mlP').value)        || 0,
+    K:           parseFloat(document.getElementById('mlK').value)        || 0,
+    temperature: parseFloat(document.getElementById('mlTemp').value)     || 25,
+    humidity:    parseFloat(document.getElementById('mlHumidity').value) || 60,
+    ph:          parseFloat(document.getElementById('mlPh').value)       || 6.5,
+    rainfall:    parseFloat(document.getElementById('mlRainfall').value) || 100,
+  };
+
+  showLoading('ML Model analyzing 100 decision trees...', 'Random Forest processing your soil data');
+
+  try {
+    const res  = await fetch('/api/ml_crop', {
+      method:  'POST',
+      headers: { 'Content-Type':'application/json' },
+      body:    JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const icon = cropIcons[data.crop.toLowerCase()] || '🌱';
+
+    // Hero
+    document.getElementById('cropIcon').textContent = icon;
+    document.getElementById('cropName').textContent = data.crop.toUpperCase();
+    document.getElementById('cropPills').innerHTML  =
+      `<span class="result-pill">🧪 ML Model</span>
+       <span class="result-pill">📊 ${data.confidence}% confident</span>
+       <span class="result-pill">🏆 99.55% accurate</span>`;
+
+    // Top 3
+    document.getElementById('top3Card').style.display = 'block';
+    document.getElementById('top3Body').innerHTML = data.top3.map((c,i) => `
+      <div style="padding:10px 0;border-bottom:1px solid #f0faf4;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+          <span style="font-size:0.85rem;font-weight:700;color:#1b4332;">
+            ${i===0?'🥇':i===1?'🥈':'🥉'}
+            ${cropIcons[c.crop.toLowerCase()]||'🌱'}
+            ${c.crop.charAt(0).toUpperCase()+c.crop.slice(1)}
+          </span>
+          <span style="font-weight:800;color:#2d6a4f;">${c.confidence}%</span>
+        </div>
+        <div class="conf-bar-wrap">
+          <div class="conf-bar" style="width:${c.confidence}%;"></div>
+        </div>
+      </div>`).join('');
+
+    // Details
+    document.getElementById('cropDetails').innerHTML = `
+      <div class="detail-row">
+        <span class="detail-key">🌱 Best Crop</span>
+        <span class="detail-value">${data.crop.charAt(0).toUpperCase()+data.crop.slice(1)}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-key">🟦 Nitrogen (N)</span>
+        <span class="detail-value">${payload.N} kg/ha</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-key">🟧 Phosphorus (P)</span>
+        <span class="detail-value">${payload.P} kg/ha</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-key">🟩 Potassium (K)</span>
+        <span class="detail-value">${payload.K} kg/ha</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-key">⚗️ pH Level</span>
+        <span class="detail-value">${payload.ph}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-key">🌡️ Temperature</span>
+        <span class="detail-value">${payload.temperature}°C</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-key">💧 Humidity</span>
+        <span class="detail-value">${payload.humidity}%</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-key">🌧️ Rainfall</span>
+        <span class="detail-value">${payload.rainfall} mm/yr</span>
+      </div>`;
+
+    // Fertilizer
+    document.getElementById('fertilizerAdvice').innerHTML = `
+      <div style="padding:10px 12px;background:#f0faf4;border-radius:10px;
+                  font-size:0.85rem;color:#1b4332;line-height:1.7;margin-bottom:0.75rem;">
+        💊 ${data.fertilizer}
+      </div>
+      <div class="warning-box">
+        ⚠️ Always confirm with a certified soil test before applying fertilizers.
+      </div>`;
+
+    showResult();
+    if (typeof showToast === 'function')
+      showToast(`${data.crop.toUpperCase()} — ${data.confidence}% confident! 🌱`, 'success');
+
+  } catch(e) {
+    hideLoading();
+    document.getElementById('cropError').style.display  = 'block';
+    document.getElementById('emptyState').style.display = 'none';
+    console.error(e);
+  }
+}
+
+// ── SIMPLE CROP ──────────────────────────────────
+const cropData = {
+  alluvial: {
+    kharif: { crop:'Rice',        icon:'🌾', temp:'20–35', water:'High',   season:'Kharif',
+      details:'Alluvial soil is ideal for rice with excellent water retention.',
+      fertilizer:'N: 120 kg/ha • P: 60 kg/ha • K: 60 kg/ha — Urea + DAP combination.' },
+    rabi:   { crop:'Wheat',       icon:'🌿', temp:'10–25', water:'Medium', season:'Rabi',
+      details:'Wheat thrives in alluvial soil during Rabi with high yield potential.',
+      fertilizer:'N: 150 kg/ha • P: 60 kg/ha • K: 40 kg/ha — DAP + MOP as basal dose.' },
+    zaid:   { crop:'Watermelon',  icon:'🍉', temp:'25–40', water:'Low',    season:'Zaid',
+      details:'Watermelon is a short-duration summer crop for alluvial soil.',
+      fertilizer:'N: 80 kg/ha • P: 40 kg/ha • K: 60 kg/ha — Drip irrigation recommended.' }
+  },
+  black: {
+    kharif: { crop:'Cotton',      icon:'🌸', temp:'25–35', water:'Medium', season:'Kharif',
+      details:'Black cotton soil is the best soil for cotton in Maharashtra.',
+      fertilizer:'N: 120 kg/ha • P: 60 kg/ha • K: 60 kg/ha — Apply in split doses.' },
+    rabi:   { crop:'Soybean',     icon:'🫘', temp:'15–30', water:'Medium', season:'Rabi',
+      details:'Soybean performs excellently in black cotton soil with good drainage.',
+      fertilizer:'Rhizobium seed treatment + P: 60 kg/ha • K: 40 kg/ha' },
+    zaid:   { crop:'Sunflower',   icon:'🌻', temp:'20–35', water:'Low',    season:'Zaid',
+      details:'Sunflower is a drought-tolerant crop for black soil.',
+      fertilizer:'N: 80 kg/ha • P: 60 kg/ha • K: 40 kg/ha' }
+  },
+  red: {
+    kharif: { crop:'Groundnut',   icon:'🥜', temp:'25–35', water:'Medium', season:'Kharif',
+      details:'Red soil provides excellent drainage for groundnut.',
+      fertilizer:'Gypsum: 400 kg/ha + N: 20 kg/ha • P: 60 kg/ha • K: 40 kg/ha' },
+    rabi:   { crop:'Mustard',     icon:'🌼', temp:'10–25', water:'Low',    season:'Rabi',
+      details:'Mustard is highly suitable for red soil with low water needs.',
+      fertilizer:'N: 80 kg/ha • P: 40 kg/ha • K: 20 kg/ha + Sulphur: 20 kg/ha' },
+    zaid:   { crop:'Maize',       icon:'🌽', temp:'20–35', water:'Medium', season:'Zaid',
+      details:'Maize grows well in red soil in summer season.',
+      fertilizer:'N: 120 kg/ha • P: 60 kg/ha • K: 40 kg/ha — 3 split doses.' }
+  },
+  sandy: {
+    kharif: { crop:'Pearl Millet',icon:'🌾', temp:'25–40', water:'Low',    season:'Kharif',
+      details:'Pearl millet is drought-tolerant and perfect for sandy soil.',
+      fertilizer:'N: 60 kg/ha • P: 30 kg/ha + Zinc Sulphate: 25 kg/ha' },
+    rabi:   { crop:'Barley',      icon:'🌿', temp:'10–20', water:'Low',    season:'Rabi',
+      details:'Barley is well-adapted to sandy soil with minimal water.',
+      fertilizer:'N: 60 kg/ha • P: 30 kg/ha • K: 20 kg/ha' },
+    zaid:   { crop:'Sesame',      icon:'🌱', temp:'25–40', water:'Low',    season:'Zaid',
+      details:'Sesame thrives in sandy soil as a profitable oilseed crop.',
+      fertilizer:'N: 40 kg/ha • P: 30 kg/ha • K: 20 kg/ha' }
+  },
+  clay: {
+    kharif: { crop:'Sugarcane',   icon:'🎋', temp:'25–35', water:'High',   season:'Kharif',
+      details:'Clay soil holds moisture well — ideal for sugarcane.',
+      fertilizer:'N: 250 kg/ha • P: 85 kg/ha • K: 60 kg/ha — 4 split doses.' },
+    rabi:   { crop:'Potato',      icon:'🥔', temp:'15–25', water:'Medium', season:'Rabi',
+      details:'Potato yields excellently in clay soil with proper drainage.',
+      fertilizer:'N: 120 kg/ha • P: 80 kg/ha • K: 120 kg/ha + FYM: 20 t/ha' },
+    zaid:   { crop:'Cucumber',    icon:'🥒', temp:'25–38', water:'Medium', season:'Zaid',
+      details:'Cucumber grows fast in clay soil with consistent moisture.',
+      fertilizer:'N: 100 kg/ha • P: 60 kg/ha • K: 80 kg/ha — Weekly fertilization.' }
+  },
+  loamy: {
+    kharif: { crop:'Soybean',     icon:'🫘', temp:'20–32', water:'Medium', season:'Kharif',
+      details:'Loamy soil is ideal. Soybean gives highest profit.',
+      fertilizer:'Rhizobium seed treatment + P: 60 kg/ha • K: 40 kg/ha' },
+    rabi:   { crop:'Chickpea',    icon:'🫘', temp:'10–25', water:'Low',    season:'Rabi',
+      details:'Chickpea is perfect for loamy soil in Rabi season.',
+      fertilizer:'N: 20 kg/ha • P: 60 kg/ha • K: 20 kg/ha + Rhizobium inoculation' },
+    zaid:   { crop:'Vegetables',  icon:'🥦', temp:'20–35', water:'Medium', season:'Zaid',
+      details:'Loamy soil supports excellent vegetable growth in summer.',
+      fertilizer:'FYM: 10 t/ha + NPK: 20:20:20 weekly foliar spray' }
+  }
+};
+
+function getSimpleCrop() {
+  const soil   = document.getElementById('soilType').value;
+  const season = document.getElementById('season').value;
+  const temp   = document.getElementById('temperature').value;
+  const humid  = document.getElementById('humidity').value;
+  const state  = document.getElementById('state').value;
+
+  if (!soil || !season) {
+    document.getElementById('cropError').style.display  = 'block';
+    document.getElementById('emptyState').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('cropError').style.display = 'none';
+  showLoading('Analyzing soil & season data...', 'Finding best crop for your conditions');
+
+  setTimeout(() => {
+    const rec = cropData[soil]?.[season];
+    if (!rec) { hideLoading(); return; }
+
+    document.getElementById('cropIcon').textContent = rec.icon;
+    document.getElementById('cropName').textContent = rec.crop;
+    document.getElementById('cropPills').innerHTML  =
+      `<span class="result-pill">🌡️ ${temp || rec.temp}°C</span>
+       <span class="result-pill">💧 ${humid || '60'}% Humidity</span>
+       <span class="result-pill">🌍 ${soil.charAt(0).toUpperCase()+soil.slice(1)} Soil</span>
+       <span class="result-pill">📅 ${rec.season}</span>
+       ${state ? `<span class="result-pill">📍 ${state}</span>` : ''}`;
+
+    document.getElementById('top3Card').style.display = 'none';
+
+    document.getElementById('cropDetails').innerHTML = `
+      <div class="detail-row">
+        <span class="detail-key">🌱 Recommended Crop</span>
+        <span class="detail-value">${rec.crop}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-key">🌡️ Ideal Temperature</span>
+        <span class="detail-value">${rec.temp}°C</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-key">💧 Water Requirement</span>
+        <span class="detail-value">${rec.water}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-key">📅 Best Season</span>
+        <span class="detail-value">${rec.season}</span>
+      </div>
+      <div style="margin-top:0.75rem;padding:10px 12px;background:#f0faf4;
+                  border-radius:10px;font-size:0.83rem;color:#1b4332;line-height:1.6;">
+        📝 ${rec.details}
+      </div>`;
+
+    const parts = rec.fertilizer.split('—');
+    const doses = parts[0].split('•');
+    const note  = parts[1] || '';
+    const colors = ['#2d6a4f','#40916c','#74c69d','#f4a261','#457b9d'];
+    document.getElementById('fertilizerAdvice').innerHTML =
+      doses.map((f,i) => `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;
+                    border-bottom:1px solid #f0faf4;font-size:0.84rem;color:#1b4332;">
+          <div style="width:10px;height:10px;border-radius:50%;flex-shrink:0;
+                      background:${colors[i%colors.length]};"></div>
+          ${f.trim()}
+        </div>`).join('') +
+      (note ? `<div style="margin-top:0.5rem;padding:8px 12px;background:#f0faf4;
+                            border-radius:8px;font-size:0.78rem;color:#2d6a4f;font-weight:600;">
+                 💡 ${note.trim()}</div>` : '') +
+      `<div class="warning-box">⚠️ Always do a soil test before finalizing fertilizer doses.</div>`;
+
+    showResult();
+    if (typeof showToast === 'function')
+      showToast(`${rec.crop} recommended! 🌱`, 'success');
+  }, 1000);
+}
+
+// ── HELPERS ──────────────────────────────────────
+function showLoading(title, sub) {
+  document.getElementById('emptyState').style.display  = 'none';
+  document.getElementById('cropLoading').style.display = 'block';
+  document.getElementById('cropResult').style.display  = 'none';
+  document.getElementById('cropError').style.display   = 'none';
+  document.getElementById('loadingText').textContent    = title;
+  document.getElementById('loadingSubText').textContent = sub;
+}
+function hideLoading() {
+  document.getElementById('cropLoading').style.display = 'none';
+  document.getElementById('emptyState').style.display  = 'block';
+}
+function showResult() {
+  document.getElementById('cropLoading').style.display = 'none';
+  document.getElementById('cropResult').style.display  = 'block';
+}
+</script>
+{% endblock %}

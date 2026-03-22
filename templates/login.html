@@ -1,0 +1,507 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == 'register' %}Create Account{% else %}Welcome Back{% endif %} — CropSense AI{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* LEFT SIDE — Animated Background */
+.auth-left {
+  background: linear-gradient(135deg, #0a2e1a 0%, #1b4332 50%, #2d6a4f 100%);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem;
+}
+
+/* Animated circles */
+.ac {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.07;
+  animation: floatBg ease-in-out infinite;
+}
+.ac1 { width:500px;height:500px;background:#74c69d;top:-150px;right:-150px;animation-duration:12s; }
+.ac2 { width:350px;height:350px;background:#b7e4c7;bottom:-80px;left:-80px;animation-duration:9s;animation-delay:3s; }
+.ac3 { width:200px;height:200px;background:#52b788;top:40%;left:30%;animation-duration:11s;animation-delay:6s; }
+
+@keyframes floatBg {
+  0%,100% { transform:translateY(0) rotate(0deg); }
+  50%      { transform:translateY(-40px) rotate(10deg); }
+}
+
+/* Floating leaves */
+.leaf {
+  position: absolute;
+  animation: leafRise linear infinite;
+  opacity: 0;
+  font-size: 1.4rem;
+  pointer-events: none;
+}
+@keyframes leafRise {
+  0%   { transform:translateY(100%) rotate(0deg);   opacity:0; }
+  10%  { opacity:0.5; }
+  90%  { opacity:0.5; }
+  100% { transform:translateY(-100px) rotate(360deg); opacity:0; }
+}
+
+/* Grid pattern overlay */
+.auth-left::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(116,198,157,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(116,198,157,0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+.left-top { position:relative;z-index:10; }
+.left-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  margin-bottom: 3rem;
+}
+.left-brand-icon {
+  width: 46px; height: 46px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  backdrop-filter: blur(10px);
+}
+.left-brand-name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.5px;
+}
+.left-brand-name span { color: #74c69d; }
+
+.left-headline {
+  font-size: 2.6rem;
+  font-weight: 900;
+  color: white;
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+  margin-bottom: 1rem;
+}
+.left-headline span {
+  background: linear-gradient(90deg, #74c69d, #b7e4c7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.left-sub {
+  color: rgba(255,255,255,0.65);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  max-width: 340px;
+}
+
+/* Feature pills */
+.feat-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
+  position: relative;
+  z-index: 10;
+}
+.feat-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 12px 16px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s;
+}
+.feat-pill:hover { background:rgba(255,255,255,0.12);transform:translateX(6px); }
+.feat-pill-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: rgba(116,198,157,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.feat-pill-text { color:white;font-size:0.85rem;font-weight:500; }
+.feat-pill-sub  { color:rgba(255,255,255,0.5);font-size:0.75rem; }
+
+/* Bottom stats */
+.left-bottom {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  gap: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.left-stat-num { font-size:1.5rem;font-weight:900;color:white; }
+.left-stat-lbl { font-size:0.72rem;color:rgba(255,255,255,0.5);margin-top:2px; }
+
+/* RIGHT SIDE — Form */
+.auth-right {
+  background: #fafffe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  overflow-y: auto;
+}
+
+.auth-form-box {
+  width: 100%;
+  max-width: 420px;
+}
+
+.form-header { margin-bottom: 2rem; }
+.form-header h2 {
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: #0a2e1a;
+  letter-spacing: -0.8px;
+  margin-bottom: 0.4rem;
+}
+.form-header p { color:#52796f;font-size:0.9rem; }
+
+/* Tabs */
+.auth-tabs {
+  display: flex;
+  background: #f0faf4;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 2rem;
+}
+.auth-tab {
+  flex: 1;
+  text-align: center;
+  padding: 11px;
+  border-radius: 9px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.88rem;
+  transition: all 0.2s;
+  color: #52796f;
+}
+.auth-tab.active {
+  background: #2d6a4f;
+  color: white;
+  box-shadow: 0 4px 12px rgba(45,106,79,0.3);
+}
+
+/* Form fields */
+.field { margin-bottom: 1.2rem; }
+.field label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1b4332;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.field input {
+  width: 100%;
+  padding: 13px 16px;
+  border: 1.5px solid #d8f3dc;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.92rem;
+  color: #1b4332;
+  background: white;
+  transition: all 0.2s;
+  outline: none;
+}
+.field input:focus {
+  border-color: #2d6a4f;
+  box-shadow: 0 0 0 3px rgba(45,106,79,0.1);
+}
+.field input::placeholder { color:#b0c4ba; }
+
+.field-row { display:grid;grid-template-columns:1fr 1fr;gap:1rem; }
+
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #1b4332, #2d6a4f);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(45,106,79,0.3);
+}
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(45,106,79,0.4);
+}
+.submit-btn:active { transform:translateY(0); }
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  color: #b0c4ba;
+  font-size: 0.8rem;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e8f5e9;
+}
+
+/* Bottom link */
+.bottom-link {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: #52796f;
+}
+.bottom-link a {
+  color: #2d6a4f;
+  font-weight: 700;
+  text-decoration: none;
+}
+.bottom-link a:hover { text-decoration:underline; }
+
+/* Trust badges */
+.trust-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e8f5e9;
+}
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: #52796f;
+  font-weight: 500;
+}
+
+@media(max-width:768px) {
+  .auth-page { grid-template-columns:1fr; }
+  .auth-left  { display:none; }
+  .auth-right { padding:2rem 1.5rem;min-height:100vh; }
+}
+</style>
+{% endblock %}
+
+{% block content_noauth %}
+<div class="auth-page">
+
+  <!-- LEFT SIDE -->
+  <div class="auth-left">
+    <!-- Animated BG -->
+    <div class="ac ac1"></div>
+    <div class="ac ac2"></div>
+    <div class="ac ac3"></div>
+
+    <!-- Floating leaves -->
+    <div class="leaf" style="left:15%;animation-duration:14s;animation-delay:0s;">🌿</div>
+    <div class="leaf" style="left:35%;animation-duration:11s;animation-delay:4s;">🍃</div>
+    <div class="leaf" style="left:60%;animation-duration:16s;animation-delay:8s;">🌱</div>
+    <div class="leaf" style="left:80%;animation-duration:13s;animation-delay:2s;">🍀</div>
+
+    <div class="left-top">
+      <a href="{{ url_for('index') }}" class="left-brand">
+        <div class="left-brand-icon">🌾</div>
+        <span class="left-brand-name">Crop<span>Sense</span> AI</span>
+      </a>
+
+      <h2 class="left-headline">
+        The Future of<br/>
+        <span>Indian Farming</span><br/>
+        is Here.
+      </h2>
+      <p class="left-sub">
+        AI-powered tools that help every farmer grow smarter, 
+        earn more, and waste less.
+      </p>
+
+      <div class="feat-pills">
+        <div class="feat-pill">
+          <div class="feat-pill-icon">🌱</div>
+          <div>
+            <div class="feat-pill-text">Smart Crop Recommendations</div>
+            <div class="feat-pill-sub">Based on soil, weather & season</div>
+          </div>
+        </div>
+        <div class="feat-pill">
+          <div class="feat-pill-icon">🐛</div>
+          <div>
+            <div class="feat-pill-text">Instant Pest Detection</div>
+            <div class="feat-pill-sub">Upload photo — AI diagnoses instantly</div>
+          </div>
+        </div>
+        <div class="feat-pill">
+          <div class="feat-pill-icon">📊</div>
+          <div>
+            <div class="feat-pill-text">Live Market Prices</div>
+            <div class="feat-pill-sub">35+ commodities updated daily</div>
+          </div>
+        </div>
+        <div class="feat-pill">
+          <div class="feat-pill-icon">🏛️</div>
+          <div>
+            <div class="feat-pill-text">Government Schemes</div>
+            <div class="feat-pill-sub">PM Kisan, Fasal Bima & more</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="left-bottom">
+      <div>
+        <div class="left-stat-num">10+</div>
+        <div class="left-stat-lbl">AI Features</div>
+      </div>
+      <div>
+        <div class="left-stat-num">35+</div>
+        <div class="left-stat-lbl">Market Prices</div>
+      </div>
+      <div>
+        <div class="left-stat-num">24/7</div>
+        <div class="left-stat-lbl">AI Support</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDE -->
+  <div class="auth-right">
+    <div class="auth-form-box">
+
+      <div class="form-header">
+        {% if mode == 'register' %}
+          <h2>Create Account 🌱</h2>
+          <p>Join CropSense AI — start farming smarter today</p>
+        {% else %}
+          <h2>Welcome Back 👋</h2>
+          <p>Sign in to your CropSense AI account</p>
+        {% endif %}
+      </div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <a href="{{ url_for('login') }}"
+           class="auth-tab {% if mode=='login' %}active{% endif %}">
+          Sign In
+        </a>
+        <a href="{{ url_for('register') }}"
+           class="auth-tab {% if mode=='register' %}active{% endif %}">
+          Create Account
+        </a>
+      </div>
+
+      {% if mode == 'register' %}
+      <!-- REGISTER FORM -->
+      <form method="POST" action="{{ url_for('register') }}">
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" name="name"
+                 placeholder="e.g. Ramesh Kumar" required/>
+        </div>
+        <div class="field">
+          <label>Email Address</label>
+          <input type="email" name="email"
+                 placeholder="you@example.com" required/>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" name="password"
+                 placeholder="Create a strong password" required/>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Phone (Optional)</label>
+            <input type="text" name="phone"
+                   placeholder="9876543210"/>
+          </div>
+          <div class="field">
+            <label>Location</label>
+            <input type="text" name="location"
+                   placeholder="Pune, Maharashtra"/>
+          </div>
+        </div>
+        <button type="submit" class="submit-btn">
+          🚀 Create My Account
+        </button>
+      </form>
+
+      {% else %}
+      <!-- LOGIN FORM -->
+      <form method="POST" action="{{ url_for('login') }}">
+        <div class="field">
+          <label>Email Address</label>
+          <input type="email" name="email"
+                 placeholder="you@example.com" required/>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" name="password"
+                 placeholder="Your password" required/>
+        </div>
+        <button type="submit" class="submit-btn">
+          🔑 Sign In to CropSense AI
+        </button>
+      </form>
+      {% endif %}
+
+      <div class="bottom-link">
+        {% if mode == 'login' %}
+          Don't have an account?
+          <a href="{{ url_for('register') }}">Create one free →</a>
+        {% else %}
+          Already have an account?
+          <a href="{{ url_for('login') }}">Sign in →</a>
+        {% endif %}
+      </div>
+
+      <div class="trust-row">
+        <div class="trust-item">🔒 Secure</div>
+        <div class="trust-item">✅ Free Forever</div>
+        <div class="trust-item">🇮🇳 Made for India</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+{% block title %}Expense Tracker — CropSense AI{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+.expense-page { font-family:'Inter',sans-serif; }
+
+/* ── HERO ── */
+.expense-hero {
+  background: linear-gradient(135deg, #0a2e1a, #1b4332, #2d6a4f);
+  border-radius: 24px;
+  padding: 2rem 2.5rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.expense-hero::before {
+  content:'💰';
+  position:absolute;
+  font-size:10rem;
+  right:-1rem;top:-2rem;
+  opacity:0.05;
+}
+.expense-hero-title { font-size:1.6rem;font-weight:900;letter-spacing:-0.5px; }
+.expense-hero-sub   { font-size:0.85rem;color:rgba(255,255,255,0.65);margin-top:4px; }
+.expense-hero-stats {
+  display:flex;
+  gap:1.5rem;
+  position:relative;
+  z-index:2;
+}
+.hero-stat-box {
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:14px;
+  padding:1rem 1.5rem;
+  text-align:center;
+  backdrop-filter:blur(10px);
+}
+.hero-stat-val { font-size:1.5rem;font-weight:900;line-height:1; }
+.hero-stat-lbl { font-size:0.72rem;opacity:0.65;margin-top:3px; }
+
+/* ── MAIN GRID ── */
+.expense-grid {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ── LEFT SIDE ── */
+.left-col { display:flex;flex-direction:column;gap:1.2rem; }
+
+/* Add Form */
+.add-form-card {
+  background: white;
+  border-radius: 20px;
+  border: 1.5px solid #e8f5e9;
+  overflow: hidden;
+}
+.add-form-header {
+  background: linear-gradient(135deg, #0a2e1a, #1b4332);
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.add-form-header-icon {
+  width: 40px;height: 40px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+.add-form-header-title { font-size:1rem;font-weight:800;color:white; }
+.add-form-header-sub   { font-size:0.72rem;color:rgba(255,255,255,0.6); }
+.add-form-body { padding:1.5rem; }
+
+.f-label {
+  display:block;
+  font-size:0.72rem;
+  font-weight:700;
+  color:#52796f;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  margin-bottom:5px;
+}
+.f-input {
+  width:100%;
+  padding:11px 14px;
+  border:1.5px solid #e8f5e9;
+  border-radius:10px;
+  font-family:'Inter',sans-serif;
+  font-size:0.88rem;
+  color:#1b4332;
+  background:#f8fffe;
+  outline:none;
+  transition:all 0.2s;
+  margin-bottom:1rem;
+}
+.f-input:focus {
+  border-color:#2d6a4f;
+  background:white;
+  box-shadow:0 0 0 3px rgba(45,106,79,0.08);
+}
+.f-input::placeholder { color:#b0c4ba; }
+.f-row { display:grid;grid-template-columns:1fr 1fr;gap:0.75rem; }
+
+.add-btn {
+  width:100%;
+  padding:13px;
+  background:linear-gradient(135deg,#1b4332,#2d6a4f);
+  color:white;
+  border:none;
+  border-radius:12px;
+  font-family:'Inter',sans-serif;
+  font-size:0.92rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.2s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  box-shadow:0 4px 16px rgba(45,106,79,0.25);
+  margin-top:0.25rem;
+}
+.add-btn:hover { transform:translateY(-2px);box-shadow:0 8px 24px rgba(45,106,79,0.35); }
+
+/* Category Summary */
+.cat-card {
+  background:white;
+  border-radius:20px;
+  border:1.5px solid #e8f5e9;
+  overflow:hidden;
+}
+.cat-header {
+  background:linear-gradient(135deg,#f0faf4,#e8f5e9);
+  padding:1rem 1.5rem;
+  border-bottom:1px solid #e8f5e9;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.cat-header-icon {
+  width:36px;height:36px;
+  background:#2d6a4f;
+  border-radius:9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1rem;
+}
+.cat-header-title { font-size:0.9rem;font-weight:800;color:#0a2e1a; }
+.cat-body { padding:1rem 1.5rem; }
+
+.cat-item {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid #f0faf4;
+}
+.cat-item:last-child { border:none; }
+.cat-left { display:flex;align-items:center;gap:10px; }
+.cat-dot  { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+.cat-name { font-size:0.85rem;color:#1b4332;font-weight:500; }
+.cat-bar-wrap {
+  flex:1;
+  margin:0 12px;
+  height:6px;
+  background:#f0faf4;
+  border-radius:3px;
+  overflow:hidden;
+}
+.cat-bar { height:100%;border-radius:3px;transition:width 1s ease; }
+.cat-amount { font-size:0.85rem;font-weight:700;color:#1b4332;white-space:nowrap; }
+
+/* ── RIGHT SIDE ── */
+.right-col { display:flex;flex-direction:column;gap:1.2rem; }
+
+/* Expense List */
+.list-card {
+  background:white;
+  border-radius:20px;
+  border:1.5px solid #e8f5e9;
+  overflow:hidden;
+}
+.list-header {
+  background:linear-gradient(135deg,#f0faf4,#e8f5e9);
+  padding:1rem 1.5rem;
+  border-bottom:1px solid #e8f5e9;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.list-header-left { display:flex;align-items:center;gap:10px; }
+.list-header-icon {
+  width:36px;height:36px;
+  background:#40916c;
+  border-radius:9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1rem;
+}
+.list-header-title { font-size:0.9rem;font-weight:800;color:#0a2e1a; }
+.list-count {
+  background:#d8f3dc;
+  color:#1b4332;
+  font-size:0.72rem;
+  font-weight:700;
+  padding:3px 10px;
+  border-radius:20px;
+}
+.list-body { max-height:480px;overflow-y:auto; }
+
+.expense-item {
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  padding:1rem 1.5rem;
+  border-bottom:1px solid #f0faf4;
+  transition:all 0.2s;
+}
+.expense-item:last-child { border:none; }
+.expense-item:hover { background:#f8fffe; }
+
+.expense-item-icon {
+  width:44px;height:44px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.2rem;
+  flex-shrink:0;
+}
+.expense-item-info { flex:1; }
+.expense-item-title { font-size:0.88rem;font-weight:700;color:#0a2e1a; }
+.expense-item-meta  { font-size:0.72rem;color:#52796f;margin-top:2px; }
+.expense-item-right { text-align:right; }
+.expense-item-amount { font-size:1rem;font-weight:800;color:#2d6a4f; }
+.expense-item-date   { font-size:0.7rem;color:#b0c4ba;margin-top:2px; }
+
+/* Empty state */
+.empty-expense {
+  text-align:center;
+  padding:3rem 2rem;
+}
+
+/* Category colors */
+.cat-seed        { background:#74c69d; }
+.cat-fertilizer  { background:#2d6a4f; }
+.cat-pesticide   { background:#f4a261; }
+.cat-irrigation  { background:#457b9d; }
+.cat-labor       { background:#e63946; }
+.cat-equipment   { background:#6c757d; }
+.cat-transport   { background:#8338ec; }
+.cat-other       { background:#adb5bd; }
+
+.icon-seed        { background:#d8f3dc; }
+.icon-fertilizer  { background:#d8f3dc; }
+.icon-pesticide   { background:#fff3e0; }
+.icon-irrigation  { background:#e3f2fd; }
+.icon-labor       { background:#fce4ec; }
+.icon-equipment   { background:#f3e5f5; }
+.icon-transport   { background:#e8eaf6; }
+.icon-other       { background:#f5f5f5; }
+
+@media(max-width:900px) {
+  .expense-grid { grid-template-columns:1fr; }
+  .expense-hero { flex-direction:column;gap:1.5rem; }
+  .expense-hero-stats { width:100%;justify-content:space-between; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="expense-page">
+
+  <!-- Hero -->
+  <div class="expense-hero">
+    <div>
+      <div class="expense-hero-title">💰 Expense Tracker</div>
+      <div class="expense-hero-sub">Track your farm expenses — know your profit margin</div>
+    </div>
+    <div class="expense-hero-stats">
+      <div class="hero-stat-box">
+        <div class="hero-stat-val">₹{{ "%.0f"|format(total_expense) }}</div>
+        <div class="hero-stat-lbl">Total Spent</div>
+      </div>
+      <div class="hero-stat-box">
+        <div class="hero-stat-val">{{ expenses|length }}</div>
+        <div class="hero-stat-lbl">Entries</div>
+      </div>
+      <div class="hero-stat-box">
+        <div class="hero-stat-val">
+          {% if expenses|length > 0 %}
+            ₹{{ "%.0f"|format(total_expense / expenses|length) }}
+          {% else %}₹0{% endif %}
+        </div>
+        <div class="hero-stat-lbl">Avg per Entry</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="expense-grid">
+
+    <!-- ── LEFT ── -->
+    <div class="left-col">
+
+      <!-- Add Expense Form -->
+      <div class="add-form-card">
+        <div class="add-form-header">
+          <div class="add-form-header-icon">➕</div>
+          <div>
+            <div class="add-form-header-title">Add New Expense</div>
+            <div class="add-form-header-sub">Record your farm spending</div>
+          </div>
+        </div>
+        <div class="add-form-body">
+          <form method="POST" action="{{ url_for('expense') }}">
+
+            <label class="f-label">📝 Expense Title</label>
+            <input type="text" name="title" class="f-input"
+                   placeholder="e.g. Urea Fertilizer, Labour wages" required/>
+
+            <div class="f-row">
+              <div>
+                <label class="f-label">💵 Amount (₹)</label>
+                <input type="number" name="amount" class="f-input"
+                       placeholder="e.g. 1500" required/>
+              </div>
+              <div>
+                <label class="f-label">🏷️ Category</label>
+                <select name="category" class="f-input" required>
+                  <option value="">-- Select --</option>
+                  <option value="seed">🌱 Seeds</option>
+                  <option value="fertilizer">💊 Fertilizer</option>
+                  <option value="pesticide">🧪 Pesticide</option>
+                  <option value="irrigation">💧 Irrigation</option>
+                  <option value="labor">👷 Labour</option>
+                  <option value="equipment">🚜 Machinery</option>
+                  <option value="transport">🚚 Transport</option>
+                  <option value="other">📦 Other</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="add-btn">
+              ✅ Save Expense
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Category Summary -->
+      <div class="cat-card">
+        <div class="cat-header">
+          <div class="cat-header-icon">📊</div>
+          <div class="cat-header-title">Category Breakdown</div>
+        </div>
+        <div class="cat-body">
+          {% set categories = {
+            'seed':       ('🌱', 'Seeds',       '#74c69d'),
+            'fertilizer': ('💊', 'Fertilizer',  '#2d6a4f'),
+            'pesticide':  ('🧪', 'Pesticide',   '#f4a261'),
+            'irrigation': ('💧', 'Irrigation',  '#457b9d'),
+            'labor':      ('👷', 'Labour',       '#e63946'),
+            'equipment':  ('🚜', 'Machinery',   '#6c757d'),
+            'transport':  ('🚚', 'Transport',   '#8338ec'),
+            'other':      ('📦', 'Other',        '#adb5bd')
+          } %}
+          {% set found = namespace(any=false) %}
+          {% for cat, info in categories.items() %}
+            {% set cat_expenses = expenses | selectattr('category', 'equalto', cat) | list %}
+            {% if cat_expenses %}
+              {% set found.any = true %}
+              {% set total = cat_expenses | sum(attribute='amount') %}
+              {% set pct = ((total / total_expense) * 100)|int if total_expense > 0 else 0 %}
+              <div class="cat-item">
+                <div class="cat-left">
+                  <div class="cat-dot" style="background:{{ info[2] }};"></div>
+                  <span class="cat-name">{{ info[0] }} {{ info[1] }}</span>
+                </div>
+                <div class="cat-bar-wrap">
+                  <div class="cat-bar" style="width:{{ pct }}%;background:{{ info[2] }};"></div>
+                </div>
+                <span class="cat-amount">₹{{ "%.0f"|format(total) }}</span>
+              </div>
+            {% endif %}
+          {% endfor %}
+          {% if not found.any %}
+            <div style="text-align:center;padding:1.5rem;color:#52796f;font-size:0.85rem;">
+              No expenses added yet
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── RIGHT ── -->
+    <div class="right-col">
+
+      <!-- Expense List -->
+      <div class="list-card">
+        <div class="list-header">
+          <div class="list-header-left">
+            <div class="list-header-icon">📋</div>
+            <div class="list-header-title">All Expenses</div>
+          </div>
+          <div class="list-count">{{ expenses|length }} entries</div>
+        </div>
+
+        {% if expenses %}
+        <div class="list-body">
+          {% set cat_icons = {
+            'seed':'🌱','fertilizer':'💊','pesticide':'🧪',
+            'irrigation':'💧','labor':'👷','equipment':'🚜',
+            'transport':'🚚','other':'📦'
+          } %}
+          {% set cat_colors = {
+            'seed':'#d8f3dc','fertilizer':'#d8f3dc','pesticide':'#fff3e0',
+            'irrigation':'#e3f2fd','labor':'#fce4ec','equipment':'#f3e5f5',
+            'transport':'#e8eaf6','other':'#f5f5f5'
+          } %}
+          {% for e in expenses|reverse %}
+          <div class="expense-item">
+            <div class="expense-item-icon"
+                 style="background:{{ cat_colors.get(e.category, '#f5f5f5') }};">
+              {{ cat_icons.get(e.category, '📦') }}
+            </div>
+            <div class="expense-item-info">
+              <div class="expense-item-title">{{ e.title }}</div>
+              <div class="expense-item-meta">
+                <span style="background:#f0faf4;color:#2d6a4f;padding:2px 8px;
+                             border-radius:8px;font-weight:600;font-size:0.7rem;">
+                  {{ e.category|capitalize }}
+                </span>
+              </div>
+            </div>
+            <div class="expense-item-right">
+              <div class="expense-item-amount">₹{{ "%.0f"|format(e.amount) }}</div>
+              <div class="expense-item-date">{{ e.date.strftime('%d %b %Y') }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="empty-expense">
+          <div style="font-size:3rem;margin-bottom:1rem;">📝</div>
+          <div style="font-size:1rem;font-weight:700;color:#1b4332;margin-bottom:6px;">
+            No Expenses Yet!
+          </div>
+          <div style="font-size:0.85rem;color:#52796f;line-height:1.6;">
+            Add your first farm expense using the form on the left
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

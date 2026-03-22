@@ -1,0 +1,594 @@
+{% extends "base.html" %}
+{% block title %}Weather — CropSense AI{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+.weather-page { font-family:'Inter',sans-serif; }
+
+/* ── SEARCH HERO ── */
+.search-hero {
+  background: linear-gradient(135deg, #0a2e1a, #1b4332, #2d6a4f);
+  border-radius: 24px;
+  padding: 2rem 2.5rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.search-hero::before {
+  content:'🌤️';
+  position:absolute;
+  font-size:10rem;
+  right:-1rem;top:-2rem;
+  opacity:0.06;
+}
+.search-hero-title {
+  font-size:1.5rem;
+  font-weight:900;
+  color:white;
+  margin-bottom:0.3rem;
+  letter-spacing:-0.5px;
+}
+.search-hero-sub { font-size:0.85rem;color:rgba(255,255,255,0.65);margin-bottom:1.5rem; }
+
+.search-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+.search-input {
+  flex: 1;
+  padding: 13px 18px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.92rem;
+  outline: none;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+}
+.search-input::placeholder { color:rgba(255,255,255,0.5); }
+.search-input:focus {
+  border-color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.15);
+}
+.search-btn {
+  padding: 13px 28px;
+  background: white;
+  color: #1b4332;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.search-btn:hover { transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.2); }
+
+/* ── LOADING ── */
+.loading-wrap {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  text-align: center;
+  border: 1.5px solid #e8f5e9;
+}
+.weather-spinner {
+  width: 52px; height: 52px;
+  border: 4px solid #e8f5e9;
+  border-top-color: #2d6a4f;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ── MAIN WEATHER CARD ── */
+.main-weather {
+  background: linear-gradient(135deg, #0a2e1a 0%, #1b4332 50%, #2d6a4f 100%);
+  border-radius: 24px;
+  padding: 2.5rem;
+  color: white;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp 0.5s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+.main-weather::before {
+  content: '';
+  position: absolute;
+  width: 300px; height: 300px;
+  background: rgba(116,198,157,0.08);
+  border-radius: 50%;
+  top: -100px; right: -80px;
+}
+.main-weather::after {
+  content: '';
+  position: absolute;
+  width: 200px; height: 200px;
+  background: rgba(116,198,157,0.05);
+  border-radius: 50%;
+  bottom: -60px; left: -40px;
+}
+
+.weather-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+.weather-location { }
+.weather-city-name {
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+.weather-date {
+  font-size: 0.82rem;
+  opacity: 0.65;
+  margin-top: 2px;
+}
+.weather-icon-big { font-size:5rem;line-height:1; }
+
+.weather-center {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+.weather-temp-big {
+  font-size: 6rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -3px;
+}
+.weather-temp-unit { font-size:2rem;font-weight:400;opacity:0.7;margin-bottom:0.8rem; }
+.weather-desc-wrap { }
+.weather-condition {
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin-bottom: 4px;
+}
+.weather-feels { font-size:0.82rem;opacity:0.65; }
+
+/* Detail stats */
+.weather-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  position: relative;
+  z-index: 2;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+.weather-stat {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 1rem;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s;
+}
+.weather-stat:hover { background:rgba(255,255,255,0.14); }
+.weather-stat-icon { font-size:1.4rem;margin-bottom:0.4rem; }
+.weather-stat-val  { font-size:1.1rem;font-weight:800;margin-bottom:2px; }
+.weather-stat-lbl  { font-size:0.72rem;opacity:0.6;font-weight:500; }
+
+/* ── BOTTOM GRID ── */
+.weather-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+/* ── FARMING ADVICE ── */
+.advice-card {
+  background: white;
+  border-radius: 20px;
+  border: 1.5px solid #e8f5e9;
+  overflow: hidden;
+}
+.advice-header {
+  background: linear-gradient(135deg, #f0faf4, #e8f5e9);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e8f5e9;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.advice-header-icon {
+  width: 38px; height: 38px;
+  background: #2d6a4f;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+.advice-header-title { font-size:0.95rem;font-weight:800;color:#0a2e1a; }
+.advice-header-sub   { font-size:0.72rem;color:#52796f; }
+.advice-body { padding:1.2rem 1.5rem; }
+
+.advice-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0faf4;
+  font-size: 0.85rem;
+  color: #1b4332;
+  line-height: 1.5;
+}
+.advice-item:last-child { border:none; }
+.advice-dot {
+  width: 8px; height: 8px;
+  background: #2d6a4f;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+/* ── FORECAST ── */
+.forecast-card-wrap {
+  background: white;
+  border-radius: 20px;
+  border: 1.5px solid #e8f5e9;
+  overflow: hidden;
+}
+.forecast-header {
+  background: linear-gradient(135deg, #f0faf4, #e8f5e9);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e8f5e9;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.forecast-header-icon {
+  width: 38px; height: 38px;
+  background: #40916c;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+.forecast-header-title { font-size:0.95rem;font-weight:800;color:#0a2e1a; }
+.forecast-body { padding:1rem 1.5rem; }
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(5,1fr);
+  gap: 0.75rem;
+}
+.forecast-item {
+  text-align: center;
+  padding: 0.75rem 0.4rem;
+  border-radius: 14px;
+  border: 1.5px solid #e8f5e9;
+  transition: all 0.2s;
+  cursor: default;
+}
+.forecast-item:hover {
+  border-color: #74c69d;
+  background: #f0faf4;
+  transform: translateY(-3px);
+}
+.forecast-day  { font-size:0.72rem;font-weight:700;color:#52796f;margin-bottom:6px; }
+.forecast-icon { font-size:1.8rem;margin-bottom:6px; }
+.forecast-temp { font-size:1rem;font-weight:800;color:#1b4332; }
+.forecast-desc { font-size:0.65rem;color:#52796f;margin-top:3px;text-transform:capitalize; }
+
+/* ── ERROR ── */
+.error-card {
+  background: #fff0f0;
+  border: 1.5px solid #ffb3b3;
+  border-radius: 16px;
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #7d0000;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+/* ── EMPTY STATE ── */
+.empty-weather {
+  background: white;
+  border-radius: 20px;
+  border: 1.5px dashed #b7e4c7;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+@media(max-width:900px) {
+  .weather-stats { grid-template-columns:repeat(2,1fr); }
+  .weather-bottom { grid-template-columns:1fr; }
+  .forecast-grid  { grid-template-columns:repeat(3,1fr); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="weather-page">
+
+  <!-- Search Hero -->
+  <div class="search-hero">
+    <div class="search-hero-title">🌤️ Weather Dashboard</div>
+    <div class="search-hero-sub">Real-time weather data with AI-powered farming advice</div>
+    <div class="search-row">
+      <input
+        type="text"
+        id="cityInput"
+        class="search-input"
+        placeholder="🔍 Search city... e.g. Pune, Mumbai, Delhi, Nagpur"
+        value="{{ user.location or '' }}"
+        onkeypress="if(event.key==='Enter') getWeather()"
+      />
+      <button class="search-btn" onclick="getWeather()">
+        🔍 Get Weather
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" style="display:none;">
+    <div class="loading-wrap">
+      <div class="weather-spinner"></div>
+      <div style="font-weight:700;color:#1b4332;margin-bottom:4px;">Fetching Weather Data...</div>
+      <div style="font-size:0.82rem;color:#52796f;">Getting real-time data for your location</div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div id="emptyState">
+    <div class="empty-weather">
+      <div style="font-size:4rem;margin-bottom:1rem;">🌍</div>
+      <div style="font-size:1.1rem;font-weight:800;color:#1b4332;margin-bottom:0.5rem;">
+        Search Your City
+      </div>
+      <div style="font-size:0.88rem;color:#52796f;line-height:1.6;max-width:300px;margin:0 auto;">
+        Enter your city name above to get real-time weather and AI farming advice
+      </div>
+    </div>
+  </div>
+
+  <!-- Weather Result -->
+  <div id="weatherResult" style="display:none;">
+
+    <!-- Main Weather Card -->
+    <div class="main-weather">
+      <div class="weather-top">
+        <div class="weather-location">
+          <div class="weather-city-name" id="weatherCity">--</div>
+          <div class="weather-date" id="weatherDate">--</div>
+        </div>
+        <div class="weather-icon-big" id="weatherIcon">🌤️</div>
+      </div>
+
+      <div class="weather-center">
+        <div style="display:flex;align-items:flex-start;">
+          <div class="weather-temp-big" id="weatherTemp">--</div>
+          <div class="weather-temp-unit">°C</div>
+        </div>
+        <div class="weather-desc-wrap">
+          <div class="weather-condition" id="weatherDesc">--</div>
+          <div class="weather-feels" id="feelsLike">Feels like --°C</div>
+        </div>
+      </div>
+
+      <div class="weather-stats">
+        <div class="weather-stat">
+          <div class="weather-stat-icon">💧</div>
+          <div class="weather-stat-val" id="humidity">--%</div>
+          <div class="weather-stat-lbl">Humidity</div>
+        </div>
+        <div class="weather-stat">
+          <div class="weather-stat-icon">💨</div>
+          <div class="weather-stat-val" id="windSpeed">-- km/h</div>
+          <div class="weather-stat-lbl">Wind Speed</div>
+        </div>
+        <div class="weather-stat">
+          <div class="weather-stat-icon">👁️</div>
+          <div class="weather-stat-val" id="visibility">-- km</div>
+          <div class="weather-stat-lbl">Visibility</div>
+        </div>
+        <div class="weather-stat">
+          <div class="weather-stat-icon">🌡️</div>
+          <div class="weather-stat-val" id="pressure">-- hPa</div>
+          <div class="weather-stat-lbl">Pressure</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Grid -->
+    <div class="weather-bottom">
+
+      <!-- Farming Advice -->
+      <div class="advice-card">
+        <div class="advice-header">
+          <div class="advice-header-icon">🌾</div>
+          <div>
+            <div class="advice-header-title">Today's Farming Advice</div>
+            <div class="advice-header-sub">AI-powered tips based on current weather</div>
+          </div>
+        </div>
+        <div class="advice-body" id="farmingAdvice"></div>
+      </div>
+
+      <!-- 5 Day Forecast -->
+      <div class="forecast-card-wrap">
+        <div class="forecast-header">
+          <div class="forecast-header-icon">📅</div>
+          <div>
+            <div class="forecast-header-title">5-Day Forecast</div>
+            <div style="font-size:0.72rem;color:#52796f;">Plan your farming week ahead</div>
+          </div>
+        </div>
+        <div class="forecast-body">
+          <div class="forecast-grid" id="forecastGrid"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div id="weatherError" style="display:none;margin-top:1rem;">
+    <div class="error-card">
+      ❌ City not found! Please check the spelling — try: Pune, Mumbai, Delhi, Bangalore
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const WEATHER_KEY = "{{ weather_key }}";
+
+const weatherIcons = {
+  'Clear':'☀️','Clouds':'⛅','Rain':'🌧️',
+  'Drizzle':'🌦️','Thunderstorm':'⛈️','Snow':'❄️',
+  'Mist':'🌫️','Haze':'🌫️','Fog':'🌫️'
+};
+const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function getFarmingAdvice(weather, temp, humidity) {
+  let advice = [];
+  if (weather === 'Rain' || weather === 'Drizzle') {
+    advice.push('No irrigation needed today — rain will take care of it');
+    advice.push('Avoid pesticide spraying — rain will wash it away');
+    advice.push('Good day for transplanting seedlings');
+  } else if (weather === 'Thunderstorm') {
+    advice.push('Stay out of the fields today — thunderstorm alert');
+    advice.push('Secure your crops and farm equipment');
+    advice.push('Check drainage channels to avoid waterlogging');
+  } else if (weather === 'Clear' && temp > 35) {
+    advice.push('High heat alert — irrigate early morning or evening');
+    advice.push('Protect young plants from direct afternoon sun');
+    advice.push('Increase watering frequency today');
+  } else if (weather === 'Clear') {
+    advice.push('Perfect weather for all outdoor farm activities');
+    advice.push('Great day for fertilizer application');
+    advice.push('Ideal conditions for harvesting and pruning');
+  } else if (weather === 'Clouds') {
+    advice.push('Moderate irrigation recommended today');
+    advice.push('Good day for pesticide and fungicide spraying');
+    advice.push('Overcast sky reduces evaporation — efficient watering day');
+  } else {
+    advice.push('Monitor your crops regularly today');
+    advice.push('Normal farming activities can continue');
+  }
+  if (humidity > 80) {
+    advice.push('High humidity — watch for fungal diseases, apply fungicide');
+  }
+  if (temp < 10) {
+    advice.push('Frost risk — cover sensitive plants overnight');
+  }
+  return advice;
+}
+
+async function getWeather() {
+  const city = document.getElementById('cityInput').value.trim();
+  if (!city) return;
+
+  document.getElementById('loading').style.display       = 'block';
+  document.getElementById('emptyState').style.display    = 'none';
+  document.getElementById('weatherResult').style.display = 'none';
+  document.getElementById('weatherError').style.display  = 'none';
+
+  try {
+    const res  = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_KEY}&units=metric`
+    );
+    if (!res.ok) throw new Error('Not found');
+    const data = await res.json();
+
+    const main     = data.weather[0].main;
+    const temp     = Math.round(data.main.temp);
+    const humidity = data.main.humidity;
+    const now      = new Date();
+
+    // Fill main card
+    document.getElementById('weatherIcon').textContent  = weatherIcons[main] || '🌤️';
+    document.getElementById('weatherCity').textContent  = `${data.name}, ${data.sys.country}`;
+    document.getElementById('weatherDate').textContent  =
+      now.toLocaleDateString('en-IN', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('weatherTemp').textContent  = temp;
+    document.getElementById('weatherDesc').textContent  = data.weather[0].description;
+    document.getElementById('feelsLike').textContent    = `Feels like ${Math.round(data.main.feels_like)}°C`;
+    document.getElementById('humidity').textContent     = humidity + '%';
+    document.getElementById('windSpeed').textContent    = Math.round(data.wind.speed * 3.6) + ' km/h';
+    document.getElementById('visibility').textContent   = (data.visibility / 1000).toFixed(1) + ' km';
+    document.getElementById('pressure').textContent     = data.main.pressure + ' hPa';
+
+    // Farming advice
+    const advices = getFarmingAdvice(main, temp, humidity);
+    document.getElementById('farmingAdvice').innerHTML =
+      advices.map(a => `
+        <div class="advice-item">
+          <div class="advice-dot"></div>
+          <span>${a}</span>
+        </div>`).join('');
+
+    // 5-day forecast
+    const fRes   = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${WEATHER_KEY}&units=metric&cnt=40`
+    );
+    const fData  = await fRes.json();
+    const dailyMap = {};
+    fData.list.forEach(item => {
+      const date = item.dt_txt.split(' ')[0];
+      if (!dailyMap[date]) dailyMap[date] = item;
+    });
+
+    const forecastDays = Object.values(dailyMap).slice(0, 5);
+    document.getElementById('forecastGrid').innerHTML = forecastDays.map(day => {
+      const d    = new Date(day.dt_txt);
+      const icon = weatherIcons[day.weather[0].main] || '🌤️';
+      const t    = Math.round(day.main.temp);
+      return `
+        <div class="forecast-item">
+          <div class="forecast-day">${days[d.getDay()]}</div>
+          <div class="forecast-icon">${icon}</div>
+          <div class="forecast-temp">${t}°C</div>
+          <div class="forecast-desc">${day.weather[0].description}</div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('loading').style.display       = 'none';
+    document.getElementById('weatherResult').style.display = 'block';
+
+    if (typeof showToast === 'function') {
+      showToast(`Weather loaded for ${data.name}! 🌤️`, 'success');
+    }
+
+  } catch(e) {
+    document.getElementById('loading').style.display      = 'none';
+    document.getElementById('weatherError').style.display = 'block';
+    document.getElementById('emptyState').style.display   = 'block';
+  }
+}
+
+window.onload = () => {
+  const city = document.getElementById('cityInput').value;
+  if (city) getWeather();
+};
+</script>
+{% endblock %}

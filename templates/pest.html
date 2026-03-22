@@ -1,0 +1,670 @@
+{% extends "base.html" %}
+{% block title %}Pest Detection — CropSense AI{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+.pest-page { font-family:'Inter',sans-serif; }
+
+/* ── HERO ── */
+.pest-hero {
+  background: linear-gradient(135deg, #0a2e1a, #1b4332, #2d6a4f);
+  border-radius: 24px;
+  padding: 2rem 2.5rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.pest-hero::before {
+  content:'🐛';
+  position:absolute;
+  font-size:10rem;
+  right:-1rem;top:-2rem;
+  opacity:0.06;
+}
+.pest-hero-title { font-size:1.6rem;font-weight:900;letter-spacing:-0.5px; }
+.pest-hero-sub   { font-size:0.85rem;color:rgba(255,255,255,0.65);margin-top:4px; }
+.pest-hero-badge {
+  background:rgba(116,198,157,0.2);
+  border:1px solid rgba(116,198,157,0.3);
+  border-radius:12px;
+  padding:10px 20px;
+  font-size:0.82rem;
+  font-weight:600;
+  color:#74c69d;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  position:relative;
+  z-index:2;
+}
+
+/* ── MAIN GRID ── */
+.pest-grid {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ── UPLOAD CARD ── */
+.upload-card {
+  background: white;
+  border-radius: 20px;
+  border: 1.5px solid #e8f5e9;
+  overflow: hidden;
+}
+.upload-card-header {
+  background: linear-gradient(135deg, #f0faf4, #e8f5e9);
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid #e8f5e9;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.upload-card-header-icon {
+  width: 40px;height: 40px;
+  background: #2d6a4f;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+.upload-card-header-title { font-size:1rem;font-weight:800;color:#0a2e1a; }
+.upload-card-header-sub   { font-size:0.72rem;color:#52796f; }
+.upload-card-body { padding:1.5rem; }
+
+/* Upload Zone */
+.upload-zone {
+  border: 2px dashed #b7e4c7;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  background: #f8fffe;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1.2rem;
+}
+.upload-zone:hover {
+  border-color: #2d6a4f;
+  background: #f0faf4;
+  transform: scale(1.01);
+}
+.upload-zone.dragover {
+  border-color: #1b4332;
+  background: #d8f3dc;
+  transform: scale(1.02);
+}
+.upload-zone.has-image { padding:0;border-style:solid;border-color:#74c69d; }
+
+.upload-placeholder {}
+.upload-placeholder-icon {
+  width: 70px;height: 70px;
+  background: #d8f3dc;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin: 0 auto 1rem;
+}
+.upload-placeholder-title { font-size:0.95rem;font-weight:700;color:#1b4332;margin-bottom:4px; }
+.upload-placeholder-sub   { font-size:0.78rem;color:#52796f; }
+.upload-placeholder-formats {
+  display:flex;
+  justify-content:center;
+  gap:0.5rem;
+  margin-top:0.75rem;
+}
+.format-badge {
+  background:#e8f5e9;
+  color:#2d6a4f;
+  padding:3px 10px;
+  border-radius:6px;
+  font-size:0.7rem;
+  font-weight:600;
+}
+
+.preview-image {
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+
+/* Change photo btn */
+.change-photo-btn {
+  position:absolute;
+  bottom:10px;right:10px;
+  background:rgba(0,0,0,0.6);
+  color:white;
+  border:none;
+  border-radius:8px;
+  padding:6px 12px;
+  font-size:0.75rem;
+  font-weight:600;
+  cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+
+/* Form fields */
+.p-label {
+  display:block;
+  font-size:0.72rem;
+  font-weight:700;
+  color:#52796f;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  margin-bottom:5px;
+}
+.p-input {
+  width:100%;
+  padding:11px 14px;
+  border:1.5px solid #e8f5e9;
+  border-radius:10px;
+  font-family:'Inter',sans-serif;
+  font-size:0.88rem;
+  color:#1b4332;
+  background:#f8fffe;
+  outline:none;
+  transition:all 0.2s;
+  margin-bottom:1rem;
+}
+.p-input:focus {
+  border-color:#2d6a4f;
+  background:white;
+  box-shadow:0 0 0 3px rgba(45,106,79,0.08);
+}
+
+.detect-btn {
+  width:100%;
+  padding:14px;
+  background:linear-gradient(135deg,#1b4332,#2d6a4f);
+  color:white;
+  border:none;
+  border-radius:12px;
+  font-family:'Inter',sans-serif;
+  font-size:0.95rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.25s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  box-shadow:0 6px 20px rgba(45,106,79,0.25);
+}
+.detect-btn:hover { transform:translateY(-2px);box-shadow:0 10px 28px rgba(45,106,79,0.35); }
+
+/* How it works */
+.how-card {
+  background: linear-gradient(135deg,#f0faf4,#e8f5e9);
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  margin-top: 1rem;
+}
+.how-title { font-size:0.75rem;font-weight:700;color:#2d6a4f;margin-bottom:0.75rem; }
+.how-steps { display:flex;flex-direction:column;gap:0.5rem; }
+.how-step  { display:flex;align-items:center;gap:10px;font-size:0.78rem;color:#1b4332; }
+.how-step-num {
+  width:22px;height:22px;
+  background:#2d6a4f;
+  color:white;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:0.65rem;
+  font-weight:700;
+  flex-shrink:0;
+}
+
+/* ── RIGHT SIDE ── */
+.result-col { display:flex;flex-direction:column;gap:1.2rem; }
+
+/* Empty State */
+.empty-detect {
+  background:white;
+  border-radius:20px;
+  border:2px dashed #b7e4c7;
+  padding:4rem 2rem;
+  text-align:center;
+}
+.empty-detect-icon { font-size:3.5rem;margin-bottom:1rem; }
+.empty-detect-title { font-size:1rem;font-weight:700;color:#1b4332;margin-bottom:6px; }
+.empty-detect-sub { font-size:0.85rem;color:#52796f;line-height:1.6; }
+
+/* Loading */
+.detect-loading {
+  background:white;
+  border-radius:20px;
+  border:1.5px solid #e8f5e9;
+  padding:3rem 2rem;
+  text-align:center;
+}
+.detect-spinner {
+  width:56px;height:56px;
+  border:4px solid #e8f5e9;
+  border-top-color:#2d6a4f;
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+  margin:0 auto 1rem;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.detect-loading-steps {
+  display:flex;
+  justify-content:center;
+  gap:1.5rem;
+  margin-top:1.2rem;
+}
+.detect-step {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  font-size:0.72rem;
+  color:#52796f;
+}
+.detect-step-icon { font-size:1.2rem; }
+
+/* Result Hero */
+.result-hero {
+  background: linear-gradient(135deg, #0a2e1a, #1b4332, #2d6a4f);
+  border-radius: 20px;
+  padding: 2rem;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp 0.5s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.result-hero::before {
+  content:'';
+  position:absolute;
+  width:200px;height:200px;
+  background:rgba(116,198,157,0.08);
+  border-radius:50%;
+  top:-60px;right:-60px;
+}
+.result-hero-top {
+  display:flex;
+  align-items:flex-start;
+  gap:1.2rem;
+  margin-bottom:1rem;
+  position:relative;
+  z-index:2;
+}
+.result-pest-icon {
+  width:70px;height:70px;
+  background:rgba(255,255,255,0.12);
+  border-radius:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:2.2rem;
+  flex-shrink:0;
+  border:1px solid rgba(255,255,255,0.15);
+}
+.result-pest-name { font-size:1.4rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px; }
+.severity-chip {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 14px;
+  border-radius:20px;
+  font-size:0.78rem;
+  font-weight:700;
+}
+.sev-high   { background:#e63946;color:white; }
+.sev-medium { background:#f4a261;color:white; }
+.sev-low    { background:#74c69d;color:#1b4332; }
+
+.result-desc {
+  font-size:0.88rem;
+  opacity:0.85;
+  line-height:1.7;
+  padding-top:1rem;
+  border-top:1px solid rgba(255,255,255,0.12);
+  position:relative;
+  z-index:2;
+}
+
+/* Info Cards */
+.info-card {
+  background:white;
+  border-radius:16px;
+  border:1.5px solid #e8f5e9;
+  overflow:hidden;
+}
+.info-card-head {
+  padding:0.9rem 1.2rem;
+  border-bottom:1px solid #e8f5e9;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#f8fffe;
+}
+.info-card-head-icon {
+  width:32px;height:32px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:0.9rem;
+}
+.info-card-head-title { font-size:0.88rem;font-weight:800;color:#0a2e1a; }
+.info-card-body       { padding:1.2rem; }
+.info-card-body p {
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  padding:7px 0;
+  border-bottom:1px solid #f0faf4;
+  font-size:0.85rem;
+  color:#1b4332;
+  line-height:1.6;
+}
+.info-card-body p:last-child { border:none; }
+.info-card-body p::before {
+  content:'';
+  width:6px;height:6px;
+  background:#2d6a4f;
+  border-radius:50%;
+  margin-top:7px;
+  flex-shrink:0;
+}
+
+@media(max-width:900px) {
+  .pest-grid { grid-template-columns:1fr; }
+  .pest-hero  { flex-direction:column;gap:1rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pest-page">
+
+  <!-- Hero -->
+  <div class="pest-hero">
+    <div>
+      <div class="pest-hero-title">🐛 AI Pest & Disease Detection</div>
+      <div class="pest-hero-sub">Upload a plant photo — AI instantly identifies disease and suggests treatment</div>
+    </div>
+    <div class="pest-hero-badge">
+      <span>🤖</span> Powered by Gemini Vision AI
+    </div>
+  </div>
+
+  <div class="pest-grid">
+
+    <!-- ── UPLOAD CARD ── -->
+    <div class="upload-card">
+      <div class="upload-card-header">
+        <div class="upload-card-header-icon">📸</div>
+        <div>
+          <div class="upload-card-header-title">Upload Plant Photo</div>
+          <div class="upload-card-header-sub">Clear leaf photo gives best results</div>
+        </div>
+      </div>
+      <div class="upload-card-body">
+
+        <!-- Upload Zone -->
+        <div class="upload-zone" id="uploadZone"
+             onclick="document.getElementById('imageInput').click()"
+             ondrop="handleDrop(event)"
+             ondragover="handleDragOver(event)"
+             ondragleave="handleDragLeave(event)">
+          <div id="uploadPlaceholder" class="upload-placeholder">
+            <div class="upload-placeholder-icon">🌿</div>
+            <div class="upload-placeholder-title">Click to Upload or Drag & Drop</div>
+            <div class="upload-placeholder-sub">Take a close-up photo of the affected leaf</div>
+            <div class="upload-placeholder-formats">
+              <span class="format-badge">JPG</span>
+              <span class="format-badge">PNG</span>
+              <span class="format-badge">WEBP</span>
+              <span class="format-badge">Max 5MB</span>
+            </div>
+          </div>
+          <img id="previewImg" class="preview-image" style="display:none;"/>
+          <button class="change-photo-btn" id="changeBtn"
+                  style="display:none;"
+                  onclick="event.stopPropagation();document.getElementById('imageInput').click()">
+            📷 Change Photo
+          </button>
+        </div>
+
+        <input type="file" id="imageInput" accept="image/*"
+               style="display:none;" onchange="previewImage(event)"/>
+
+        <!-- Crop Type -->
+        <label class="p-label">🌱 Crop Type (Optional)</label>
+        <select id="cropType" class="p-input">
+          <option value="">-- Select crop for better accuracy --</option>
+          <option>Tomato</option>
+          <option>Potato</option>
+          <option>Rice / Paddy</option>
+          <option>Wheat</option>
+          <option>Cotton</option>
+          <option>Maize / Corn</option>
+          <option>Soybean</option>
+          <option>Sugarcane</option>
+          <option>Onion</option>
+          <option>Chilli / Pepper</option>
+          <option>Other</option>
+        </select>
+
+        <button class="detect-btn" onclick="detectPest()">
+          🔍 Detect Disease Now
+        </button>
+
+        <!-- How it works -->
+        <div class="how-card">
+          <div class="how-title">HOW IT WORKS</div>
+          <div class="how-steps">
+            <div class="how-step">
+              <div class="how-step-num">1</div>
+              Upload a clear photo of the affected plant leaf
+            </div>
+            <div class="how-step">
+              <div class="how-step-num">2</div>
+              AI analyzes the image using Gemini Vision
+            </div>
+            <div class="how-step">
+              <div class="how-step-num">3</div>
+              Get disease name, severity & treatment instantly
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── RIGHT SIDE ── -->
+    <div class="result-col">
+
+      <!-- Empty State -->
+      <div class="empty-detect" id="defaultState">
+        <div class="empty-detect-icon">🔬</div>
+        <div class="empty-detect-title">Ready to Analyze!</div>
+        <div class="empty-detect-sub">
+          Upload a plant photo on the left<br/>
+          and our AI will detect any disease or pest instantly
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="detect-loading" id="pestLoading" style="display:none;">
+        <div class="detect-spinner"></div>
+        <div style="font-weight:800;color:#1b4332;font-size:1rem;margin-bottom:4px;">
+          Analyzing Your Plant...
+        </div>
+        <div style="font-size:0.82rem;color:#52796f;margin-bottom:1rem;">
+          AI is examining the image for diseases and pests
+        </div>
+        <div class="detect-loading-steps">
+          <div class="detect-step">
+            <div class="detect-step-icon">🖼️</div>
+            <span>Processing image</span>
+          </div>
+          <div class="detect-step">
+            <div class="detect-step-icon">🤖</div>
+            <span>Running AI model</span>
+          </div>
+          <div class="detect-step">
+            <div class="detect-step-icon">📋</div>
+            <span>Generating report</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result -->
+      <div id="pestResult" style="display:none;">
+
+        <!-- Result Hero -->
+        <div class="result-hero">
+          <div class="result-hero-top">
+            <div class="result-pest-icon" id="pestIcon">🐛</div>
+            <div>
+              <div class="result-pest-name" id="pestName">--</div>
+              <div id="severityBadge"></div>
+            </div>
+          </div>
+          <div class="result-desc" id="pestDesc">--</div>
+        </div>
+
+        <!-- Treatment -->
+        <div class="info-card">
+          <div class="info-card-head">
+            <div class="info-card-head-icon" style="background:#fce8e8;">💊</div>
+            <div class="info-card-head-title">Treatment Plan</div>
+          </div>
+          <div class="info-card-body" id="pestTreatment"></div>
+        </div>
+
+        <!-- Prevention -->
+        <div class="info-card">
+          <div class="info-card-head">
+            <div class="info-card-head-icon" style="background:#d8f3dc;">🛡️</div>
+            <div class="info-card-head-title">Prevention & Control</div>
+          </div>
+          <div class="info-card-body" id="pestPrevention"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedFile = null;
+
+function previewImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('previewImg');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+    document.getElementById('changeBtn').style.display = 'block';
+    document.getElementById('uploadZone').classList.add('has-image');
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = document.getElementById('previewImg');
+      img.src = ev.target.result;
+      img.style.display = 'block';
+      document.getElementById('uploadPlaceholder').style.display = 'none';
+      document.getElementById('changeBtn').style.display = 'block';
+      document.getElementById('uploadZone').classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.add('dragover');
+}
+function handleDragLeave(e) {
+  document.getElementById('uploadZone').classList.remove('dragover');
+}
+
+async function detectPest() {
+  if (!selectedFile) {
+    if (typeof showToast === 'function') showToast('Please upload a plant photo first!', 'warning');
+    else alert('Please upload a plant photo first!');
+    return;
+  }
+
+  document.getElementById('defaultState').style.display = 'none';
+  document.getElementById('pestLoading').style.display  = 'block';
+  document.getElementById('pestResult').style.display   = 'none';
+
+  const formData = new FormData();
+  formData.append('image', selectedFile);
+  formData.append('crop_type', document.getElementById('cropType').value || 'unknown');
+
+  try {
+    const res  = await fetch('/api/detect_pest', { method:'POST', body:formData });
+    const data = await res.json();
+
+    // Result Hero
+    document.getElementById('pestIcon').textContent = data.icon || '🐛';
+    document.getElementById('pestName').textContent = data.name || 'Unknown';
+    document.getElementById('pestDesc').textContent = data.description || '';
+
+    const sev = data.severity || 'medium';
+    const sevMap = {
+      high:   { cls:'sev-high',   label:'🔴 High Severity' },
+      medium: { cls:'sev-medium', label:'🟡 Medium Severity' },
+      low:    { cls:'sev-low',    label:'🟢 Low Severity' }
+    };
+    const s = sevMap[sev] || sevMap.medium;
+    document.getElementById('severityBadge').innerHTML =
+      `<span class="severity-chip ${s.cls}">${s.label}</span>`;
+
+    // Treatment & Prevention — strip <p> tags and re-render as clean list
+    function renderList(html) {
+      const text = html.replace(/<\/?p>/gi, '\n').replace(/•\s*/g, '').trim();
+      return text.split('\n').filter(l => l.trim()).map(l =>
+        `<p>${l.trim()}</p>`).join('');
+    }
+    document.getElementById('pestTreatment').innerHTML  = renderList(data.treatment  || '');
+    document.getElementById('pestPrevention').innerHTML = renderList(data.prevention || '');
+
+    document.getElementById('pestLoading').style.display = 'none';
+    document.getElementById('pestResult').style.display  = 'block';
+
+    if (typeof showToast === 'function') showToast('Disease detected! Check the results. 🔬', 'success');
+
+  } catch(e) {
+    document.getElementById('pestLoading').style.display  = 'none';
+    document.getElementById('defaultState').style.display = 'block';
+    if (typeof showToast === 'function') showToast('Error! Please try again.', 'error');
+    else alert('Error! Please try again.');
+  }
+}
+</script>
+{% endblock %}

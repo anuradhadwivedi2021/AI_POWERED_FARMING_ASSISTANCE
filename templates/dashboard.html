@@ -1,0 +1,652 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — CropSense AI{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+.dash { font-family:'Inter',sans-serif; }
+
+/* ── WELCOME HERO ── */
+.welcome-hero {
+  background: linear-gradient(135deg, #0a2e1a, #1b4332, #2d6a4f);
+  border-radius: 24px;
+  padding: 2rem 2.5rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.welcome-hero::before {
+  content:'🌾';
+  position:absolute;
+  font-size:12rem;
+  right:-2rem;top:-3rem;
+  opacity:0.05;
+}
+.welcome-hero::after {
+  content:'';
+  position:absolute;
+  width:250px;height:250px;
+  background:rgba(116,198,157,0.08);
+  border-radius:50%;
+  bottom:-80px;right:200px;
+}
+.welcome-left {}
+.welcome-greeting {
+  font-size:0.8rem;
+  color:rgba(255,255,255,0.6);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  margin-bottom:4px;
+}
+.welcome-name {
+  font-size:2rem;
+  font-weight:900;
+  letter-spacing:-0.5px;
+  margin-bottom:6px;
+}
+.welcome-name span { color:#74c69d; }
+.welcome-sub { font-size:0.88rem;color:rgba(255,255,255,0.65); }
+.welcome-right {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:0.5rem;
+  position:relative;
+  z-index:2;
+}
+.welcome-date {
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:10px;
+  padding:8px 16px;
+  font-size:0.82rem;
+  color:rgba(255,255,255,0.8);
+  backdrop-filter:blur(10px);
+}
+.welcome-status {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:0.78rem;
+  color:#74c69d;
+}
+.status-dot {
+  width:8px;height:8px;
+  background:#74c69d;
+  border-radius:50%;
+  animation:blink 2s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ── STAT CARDS ── */
+.stats-row {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1rem;
+  margin-bottom:1.5rem;
+}
+.stat-box {
+  background:white;
+  border-radius:18px;
+  padding:1.2rem 1.4rem;
+  border:1.5px solid #e8f5e9;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  transition:all 0.2s;
+  position:relative;
+  overflow:hidden;
+}
+.stat-box::before {
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:3px;
+  border-radius:18px 18px 0 0;
+}
+.stat-box.green::before  { background:linear-gradient(90deg,#2d6a4f,#74c69d); }
+.stat-box.orange::before { background:linear-gradient(90deg,#f4a261,#f9a825); }
+.stat-box.blue::before   { background:linear-gradient(90deg,#457b9d,#64b5f6); }
+.stat-box.teal::before   { background:linear-gradient(90deg,#40916c,#74c69d); }
+.stat-box:hover { transform:translateY(-3px);box-shadow:0 8px 24px rgba(45,106,79,0.1); }
+
+.stat-box-icon {
+  width:50px;height:50px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.4rem;
+  flex-shrink:0;
+}
+.stat-box.green  .stat-box-icon { background:#d8f3dc; }
+.stat-box.orange .stat-box-icon { background:#fff3e0; }
+.stat-box.blue   .stat-box-icon { background:#e3f2fd; }
+.stat-box.teal   .stat-box-icon { background:#e0f2f1; }
+
+.stat-box-val { font-size:1.5rem;font-weight:900;color:#0a2e1a;line-height:1; }
+.stat-box-lbl { font-size:0.72rem;color:#52796f;margin-top:3px;font-weight:500; }
+
+/* ── SECTION TITLE ── */
+.section-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:1rem;
+}
+.section-title {
+  font-size:1rem;
+  font-weight:800;
+  color:#0a2e1a;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.section-link {
+  font-size:0.78rem;
+  color:#2d6a4f;
+  font-weight:600;
+  text-decoration:none;
+}
+.section-link:hover { text-decoration:underline; }
+
+/* ── QUICK ACCESS ── */
+.quick-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1rem;
+  margin-bottom:1.5rem;
+}
+.quick-card {
+  background:white;
+  border-radius:18px;
+  padding:1.4rem;
+  border:1.5px solid #e8f5e9;
+  text-decoration:none;
+  transition:all 0.25s;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  position:relative;
+  overflow:hidden;
+}
+.quick-card::after {
+  content:'→';
+  position:absolute;
+  right:1rem;
+  font-size:1rem;
+  color:#b0c4ba;
+  transition:all 0.2s;
+}
+.quick-card:hover { border-color:#74c69d;transform:translateY(-3px);box-shadow:0 8px 24px rgba(45,106,79,0.1); }
+.quick-card:hover::after { right:0.7rem;color:#2d6a4f; }
+
+.quick-icon {
+  width:50px;height:50px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.4rem;
+  flex-shrink:0;
+}
+.quick-title { font-size:0.9rem;font-weight:700;color:#0a2e1a;margin-bottom:2px; }
+.quick-desc  { font-size:0.75rem;color:#52796f; }
+
+/* ── BOTTOM GRID ── */
+.bottom-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1.5rem;
+}
+
+/* ── PROFIT CALCULATOR ── */
+.profit-card {
+  background:white;
+  border-radius:20px;
+  border:1.5px solid #e8f5e9;
+  overflow:hidden;
+}
+.profit-header {
+  background:linear-gradient(135deg,#f0faf4,#e8f5e9);
+  padding:1rem 1.5rem;
+  border-bottom:1px solid #e8f5e9;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.profit-header-icon {
+  width:38px;height:38px;
+  background:#2d6a4f;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.1rem;
+}
+.profit-header-title { font-size:0.95rem;font-weight:800;color:#0a2e1a; }
+.profit-header-sub   { font-size:0.72rem;color:#52796f; }
+.profit-body { padding:1.5rem; }
+
+.profit-field { margin-bottom:1rem; }
+.profit-label {
+  display:block;
+  font-size:0.72rem;
+  font-weight:700;
+  color:#52796f;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  margin-bottom:5px;
+}
+.profit-input {
+  width:100%;
+  padding:10px 12px;
+  border:1.5px solid #e8f5e9;
+  border-radius:10px;
+  font-family:'Inter',sans-serif;
+  font-size:0.88rem;
+  color:#1b4332;
+  background:#f8fffe;
+  outline:none;
+  transition:all 0.2s;
+}
+.profit-input:focus { border-color:#2d6a4f;background:white;box-shadow:0 0 0 3px rgba(45,106,79,0.08); }
+.profit-btn {
+  width:100%;
+  padding:12px;
+  background:linear-gradient(135deg,#1b4332,#2d6a4f);
+  color:white;
+  border:none;
+  border-radius:12px;
+  font-family:'Inter',sans-serif;
+  font-size:0.9rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.2s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  box-shadow:0 4px 14px rgba(45,106,79,0.25);
+}
+.profit-btn:hover { transform:translateY(-2px);box-shadow:0 8px 20px rgba(45,106,79,0.35); }
+
+.profit-result {
+  background:linear-gradient(135deg,#0a2e1a,#1b4332,#2d6a4f);
+  border-radius:16px;
+  padding:1.5rem;
+  color:white;
+  margin-top:1rem;
+  animation:fadeUp 0.4s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.profit-main-val { font-size:2.2rem;font-weight:900;letter-spacing:-1px; }
+.profit-main-lbl { font-size:0.78rem;opacity:0.65;margin-bottom:1rem; }
+.profit-mini-grid { display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:1rem; }
+.profit-mini {
+  background:rgba(255,255,255,0.1);
+  border-radius:10px;
+  padding:0.7rem;
+}
+.profit-mini-lbl { font-size:0.68rem;opacity:0.65;margin-bottom:2px; }
+.profit-mini-val { font-size:0.95rem;font-weight:700; }
+.profit-advice {
+  background:rgba(255,255,255,0.08);
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:0.8rem;
+  line-height:1.6;
+}
+
+/* ── RECENT CROPS TABLE ── */
+.table-card {
+  background:white;
+  border-radius:20px;
+  border:1.5px solid #e8f5e9;
+  overflow:hidden;
+}
+.table-header {
+  background:linear-gradient(135deg,#f0faf4,#e8f5e9);
+  padding:1rem 1.5rem;
+  border-bottom:1px solid #e8f5e9;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.table-header-icon {
+  width:38px;height:38px;
+  background:#40916c;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.1rem;
+}
+.dt { width:100%;border-collapse:collapse; }
+.dt th {
+  background:#f8fffe;
+  padding:10px 16px;
+  text-align:left;
+  font-size:0.72rem;
+  font-weight:700;
+  color:#52796f;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  border-bottom:1px solid #e8f5e9;
+}
+.dt td {
+  padding:12px 16px;
+  border-bottom:1px solid #f0faf4;
+  font-size:0.84rem;
+  color:#1b4332;
+}
+.dt tr:last-child td { border:none; }
+.dt tr:hover td { background:#f8fffe; }
+.crop-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  background:#d8f3dc;
+  color:#1b4332;
+  padding:3px 10px;
+  border-radius:20px;
+  font-size:0.75rem;
+  font-weight:600;
+}
+
+/* Empty crops */
+.empty-table {
+  text-align:center;
+  padding:2.5rem;
+  color:#52796f;
+}
+
+@media(max-width:900px){
+  .stats-row { grid-template-columns:repeat(2,1fr); }
+  .quick-grid { grid-template-columns:1fr 1fr; }
+  .bottom-grid { grid-template-columns:1fr; }
+}
+@media(max-width:600px){
+  .stats-row { grid-template-columns:1fr 1fr; }
+  .quick-grid { grid-template-columns:1fr; }
+  .welcome-right { display:none; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash">
+
+  <!-- Welcome Hero -->
+  <div class="welcome-hero">
+    <div class="welcome-left">
+      <div class="welcome-greeting">Good day, farmer 👋</div>
+      <div class="welcome-name">
+        Welcome back, <span>{{ user.name.split()[0] }}!</span>
+      </div>
+      <div class="welcome-sub">
+        Here's your farm overview for today — stay smart, farm better.
+      </div>
+    </div>
+    <div class="welcome-right">
+      <div class="welcome-date" id="currentDate">--</div>
+      <div class="welcome-status">
+        <div class="status-dot"></div>
+        CropSense AI is Active
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row">
+    <div class="stat-box green">
+      <div class="stat-box-icon">🌱</div>
+      <div>
+        <div class="stat-box-val">{{ crops|length }}</div>
+        <div class="stat-box-lbl">Crop Searches</div>
+      </div>
+    </div>
+    <div class="stat-box orange">
+      <div class="stat-box-icon">💰</div>
+      <div>
+        <div class="stat-box-val">₹{{ "%.0f"|format(total_expense) }}</div>
+        <div class="stat-box-lbl">Total Expenses</div>
+      </div>
+    </div>
+    <div class="stat-box blue">
+      <div class="stat-box-icon">📍</div>
+      <div>
+        <div class="stat-box-val" style="font-size:1rem;">
+          {{ user.location or 'Not Set' }}
+        </div>
+        <div class="stat-box-lbl">Your Location</div>
+      </div>
+    </div>
+    <div class="stat-box teal">
+      <div class="stat-box-icon">🤖</div>
+      <div>
+        <div class="stat-box-val" style="font-size:1rem;color:#2d6a4f;">Active</div>
+        <div class="stat-box-lbl">AI Assistant</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Access -->
+  <div class="section-head">
+    <div class="section-title">⚡ Quick Access</div>
+  </div>
+  <div class="quick-grid">
+    <a href="{{ url_for('crop') }}" class="quick-card">
+      <div class="quick-icon" style="background:#d8f3dc;">🌱</div>
+      <div>
+        <div class="quick-title">Crop Recommendation</div>
+        <div class="quick-desc">AI suggests best crop for your soil</div>
+      </div>
+    </a>
+    <a href="{{ url_for('pest') }}" class="quick-card">
+      <div class="quick-icon" style="background:#fce8e8;">🐛</div>
+      <div>
+        <div class="quick-title">Pest Detection</div>
+        <div class="quick-desc">Upload photo — AI detects disease</div>
+      </div>
+    </a>
+    <a href="{{ url_for('chatbot') }}" class="quick-card">
+      <div class="quick-icon" style="background:#e8f0fe;">🤖</div>
+      <div>
+        <div class="quick-title">AI Chatbot</div>
+        <div class="quick-desc">Ask farming questions anytime</div>
+      </div>
+    </a>
+    <a href="{{ url_for('weather') }}" class="quick-card">
+      <div class="quick-icon" style="background:#e8f8f5;">🌤️</div>
+      <div>
+        <div class="quick-title">Weather Forecast</div>
+        <div class="quick-desc">5-day forecast with farm tips</div>
+      </div>
+    </a>
+    <a href="{{ url_for('market') }}" class="quick-card">
+      <div class="quick-icon" style="background:#fff8e1;">📊</div>
+      <div>
+        <div class="quick-title">Market Prices</div>
+        <div class="quick-desc">Live mandi prices — 35+ crops</div>
+      </div>
+    </a>
+    <a href="{{ url_for('schemes') }}" class="quick-card">
+      <div class="quick-icon" style="background:#f3e8ff;">🏛️</div>
+      <div>
+        <div class="quick-title">Govt Schemes</div>
+        <div class="quick-desc">PM Kisan, Fasal Bima & more</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Bottom Grid -->
+  <div class="bottom-grid">
+
+    <!-- Profit Calculator -->
+    <div class="profit-card">
+      <div class="profit-header">
+        <div class="profit-header-icon">📈</div>
+        <div>
+          <div class="profit-header-title">Profit Calculator</div>
+          <div class="profit-header-sub">Estimate your crop earnings</div>
+        </div>
+      </div>
+      <div class="profit-body">
+        <div class="profit-field">
+          <label class="profit-label">🌾 Select Crop</label>
+          <select id="profitCrop" class="profit-input">
+            <option value="wheat">Wheat</option>
+            <option value="rice">Rice</option>
+            <option value="cotton">Cotton</option>
+            <option value="soybean">Soybean</option>
+            <option value="tomato">Tomato</option>
+            <option value="onion">Onion</option>
+            <option value="sugarcane">Sugarcane</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div class="profit-field">
+            <label class="profit-label">📐 Land (Acres)</label>
+            <input type="number" id="profitAcres" class="profit-input"
+                   placeholder="e.g. 2" value="1" min="0.1" step="0.1"/>
+          </div>
+          <div class="profit-field">
+            <label class="profit-label">💰 Total Cost (₹)</label>
+            <input type="number" id="profitExpense" class="profit-input"
+                   placeholder="e.g. 15000"
+                   value="{{ total_expense|int }}"/>
+          </div>
+        </div>
+        <button class="profit-btn" onclick="calculateProfit()">
+          📈 Calculate Profit
+        </button>
+
+        <div id="profitResult" style="display:none;">
+          <div class="profit-result">
+            <div class="profit-main-val" id="profitAmount">₹0</div>
+            <div class="profit-main-lbl">Expected Net Profit</div>
+            <div class="profit-mini-grid">
+              <div class="profit-mini">
+                <div class="profit-mini-lbl">Total Revenue</div>
+                <div class="profit-mini-val" id="profitRevenue">₹0</div>
+              </div>
+              <div class="profit-mini">
+                <div class="profit-mini-lbl">ROI</div>
+                <div class="profit-mini-val" id="profitROI">0%</div>
+              </div>
+              <div class="profit-mini">
+                <div class="profit-mini-lbl">Expected Yield</div>
+                <div class="profit-mini-val" id="profitYield">0 Qt</div>
+              </div>
+              <div class="profit-mini">
+                <div class="profit-mini-lbl">Market Rate</div>
+                <div class="profit-mini-val" id="profitPrice">₹0/Qt</div>
+              </div>
+            </div>
+            <div class="profit-advice" id="profitAdvice"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Crops Table -->
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-header-icon">🌾</div>
+        <div>
+          <div style="font-size:0.95rem;font-weight:800;color:#0a2e1a;">Recent Crop Searches</div>
+          <div style="font-size:0.72rem;color:#52796f;">Your latest recommendations</div>
+        </div>
+      </div>
+      {% if crops %}
+      <div style="overflow-x:auto;">
+        <table class="dt">
+          <thead>
+            <tr>
+              <th>Crop</th>
+              <th>Soil Type</th>
+              <th>Season</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in crops %}
+            <tr>
+              <td><span class="crop-badge">🌱 {{ c.crop_name }}</span></td>
+              <td>{{ c.soil_type }}</td>
+              <td>{{ c.season }}</td>
+              <td style="color:#52796f;font-size:0.78rem;">
+                {{ c.created_at.strftime('%d %b %Y') }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-table">
+        <div style="font-size:2.5rem;margin-bottom:0.75rem;">🌱</div>
+        <div style="font-weight:700;color:#1b4332;margin-bottom:4px;">No searches yet!</div>
+        <div style="font-size:0.82rem;">
+          Go to <a href="{{ url_for('crop') }}"
+                   style="color:#2d6a4f;font-weight:700;">Crop Recommendation</a>
+          to get started
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Set current date
+document.getElementById('currentDate').textContent =
+  new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+
+const cropProfit = {
+  wheat:     { yield:18,  price:2150, label:'Wheat' },
+  rice:      { yield:20,  price:3200, label:'Rice' },
+  cotton:    { yield:8,   price:6800, label:'Cotton' },
+  soybean:   { yield:10,  price:4200, label:'Soybean' },
+  tomato:    { yield:120, price:1500, label:'Tomato' },
+  onion:     { yield:100, price:1100, label:'Onion' },
+  sugarcane: { yield:300, price:350,  label:'Sugarcane' },
+};
+
+function calculateProfit() {
+  const crop    = document.getElementById('profitCrop').value;
+  const acres   = parseFloat(document.getElementById('profitAcres').value) || 1;
+  const expense = parseFloat(document.getElementById('profitExpense').value) || 0;
+  const data    = cropProfit[crop];
+
+  const totalYield   = data.yield * acres;
+  const totalRevenue = totalYield * data.price;
+  const profit       = totalRevenue - expense;
+  const roi          = expense > 0 ? ((profit / expense) * 100).toFixed(1) : 0;
+
+  document.getElementById('profitAmount').textContent  =
+    '₹' + Math.max(0, profit).toLocaleString('en-IN');
+  document.getElementById('profitRevenue').textContent =
+    '₹' + totalRevenue.toLocaleString('en-IN');
+  document.getElementById('profitROI').textContent     = roi + '%';
+  document.getElementById('profitYield').textContent   = totalYield + ' Qt';
+  document.getElementById('profitPrice').textContent   = '₹' + data.price + '/Qt';
+
+  document.getElementById('profitAdvice').textContent = profit > 0
+    ? `✅ ${data.label} on ${acres} acre(s) — expected profit ₹${profit.toLocaleString('en-IN')} with ${roi}% ROI!`
+    : `⚠️ Cost exceeds revenue. Reduce expenses or increase farm area.`;
+
+  document.getElementById('profitResult').style.display = 'block';
+  if (typeof showToast === 'function') showToast('Profit calculated! 📈', 'success');
+}
+</script>
+{% endblock %}
