@@ -7,3 +7,4 @@ uploads/
 *.pkl
 instance/
 .DS_Store
+.env

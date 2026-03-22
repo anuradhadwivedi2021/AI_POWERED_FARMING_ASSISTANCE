@@ -16,18 +16,9 @@
 | **Project Name** | CropSense AI — Smart Farming Assistant |
 | **University** | JSPM University, Pune |
 | **Department** | School of Computational Sciences |
-| **Course** | B.Sc. Computer Science — Third Year |
-| **Academic Year** | 2025–2026 |
-| **Project Guide** | Ms. Apurwa Dhawale |
 
 
-| Name 
 
-| Anuradha Dwivedi | 22456010275 |
-| Sanika Kumbhar | 22456010278 |
-| Tejal Satpute | 22356010118 |
-| Tanisha Yadav | 22356010141 |
-| Prerna Upadhyay | 22356010133 |
 
 ---
 
