@@ -10,6 +10,9 @@ import pickle
 import pandas as pd
 import google.generativeai as genai
 
+
+
+
 app = Flask(__name__)
 app.config.from_object(Config)
 
@@ -374,3 +377,7 @@ Respond ONLY in this exact JSON format (no markdown, no extra text):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+    if __name__ == "__main__":
+        app.run(host="0.0.0.0", port=7860)
