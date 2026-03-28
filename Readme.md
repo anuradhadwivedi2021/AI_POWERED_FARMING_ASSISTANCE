@@ -325,5 +325,5 @@ This project is developed for academic purposes at JSPM University, Pune.
 <div align="center">
   <strong>🌾 CropSense AI — Empowering Indian Farmers with Technology 🌾</strong>
   <br/>
-  Made with 💚 by Team CropSense AI — JSPM University, Pune
+  Made with 💚 by Anuradha dwivedi CropSense AI — 
 </div>
