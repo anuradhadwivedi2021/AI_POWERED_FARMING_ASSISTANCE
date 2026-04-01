@@ -8,7 +8,7 @@ import json
 import base64
 import pickle
 import pandas as pd
-import google.generativeai as genai
+from google import genai
 
 
 app = Flask(__name__)
@@ -271,8 +271,7 @@ def api_chat():
 
     try:
         gemini_key = os.environ.get('GEMINI_API_KEY', '')
-        genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        client = genai.Client(api_key=gemini_key)
 
         prompt = f"""You are CropSense AI — an expert Indian farming assistant.
 
@@ -300,7 +299,10 @@ FARMING RULES:
 - Indian farming context only
 - Real crop names, fertilizer doses, government schemes"""
 
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=prompt
+        )
         return jsonify({'reply': response.text, 'status': 'ok'})
 
     except Exception as e:
@@ -319,8 +321,7 @@ def api_detect_pest():
 
     try:
         gemini_key = os.environ.get('GEMINI_API_KEY', '')
-        genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel('gemini-pro')
+        client = genai.Client(api_key=gemini_key)
 
         img_bytes = file.read()
         img_b64   = base64.b64encode(img_bytes).decode()
@@ -338,10 +339,13 @@ Respond ONLY in this exact JSON format (no markdown, no extra text):
   "prevention": "<p>• Prevention tip 1</p><p>• Prevention tip 2</p><p>• Prevention tip 3</p>"
 }}"""
 
-        response = model.generate_content([
-            prompt,
-            {'mime_type': file.content_type or 'image/jpeg', 'data': img_b64}
-        ])
+        response = client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=[
+                prompt,
+                {'mime_type': file.content_type or 'image/jpeg', 'data': img_b64}
+            ]
+        )
 
         text = response.text.strip()
         if '```' in text:
