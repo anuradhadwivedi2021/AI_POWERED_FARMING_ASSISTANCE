@@ -11,8 +11,6 @@ import pandas as pd
 import google.generativeai as genai
 
 
-
-
 app = Flask(__name__)
 app.config.from_object(Config)
 
@@ -41,9 +39,9 @@ try:
     print(f"✅ ML Model loaded! Accuracy: {crop_info['accuracy']*100:.2f}%")
 except Exception as e:
     print(f"⚠️ ML Model not loaded: {e}")
-    crop_model     = None
-    label_encoder  = None
-    crop_info      = None
+    crop_model    = None
+    label_encoder = None
+    crop_info     = None
 
 # ─── HOME ───────────────────────────────────────────
 @app.route('/')
@@ -242,7 +240,6 @@ def api_ml_crop():
             'Consult local agriculture department for specific doses'
         )
 
-        # Save to database
         record = CropHistory(
             user_id   = current_user.id,
             crop_name = crop_name,
@@ -323,7 +320,7 @@ def api_detect_pest():
     try:
         gemini_key = os.environ.get('GEMINI_API_KEY', '')
         genai.configure(api_key=gemini_key)
-       model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-pro')
 
         img_bytes = file.read()
         img_b64   = base64.b64encode(img_bytes).decode()
@@ -375,8 +372,5 @@ Respond ONLY in this exact JSON format (no markdown, no extra text):
             'prevention':  '<p>• Dobara try karo</p>'
         })
 
-    if __name__ == "__main__":
-       app.run(host="0.0.0.0", port=7860)
-
-    if __name__ == "__main__":
-        app.run(host="0.0.0.0", port=7860)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=7860)
