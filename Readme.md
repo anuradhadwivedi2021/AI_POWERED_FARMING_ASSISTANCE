@@ -6,6 +6,15 @@
 ![Flask](https://img.shields.io/badge/Flask-3.0-green)
 ![ML Accuracy](https://img.shields.io/badge/ML%20Accuracy-99.55%25-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
+![Deployed](https://img.shields.io/badge/Deployed-Render-purple)
+
+---
+
+## 🌐 Live Demo
+
+🚀 **Deployed on Render:** [https://ai-powered-farming-assistance.onrender.com/](https://ai-powered-farming-assistance.onrender.com/)
+
+> ⚠️ Note: Free instance hai — pehli baar load hone mein 50 seconds lag sakte hain.
 
 ---
 
@@ -16,9 +25,7 @@
 | **Project Name** | CropSense AI — Smart Farming Assistant |
 | **University** | JSPM University, Pune |
 | **Department** | School of Computational Sciences |
-
-
-
+| **Live Demo** | [Click Here 🚀](https://ai-powered-farming-assistance.onrender.com/) |
 
 ---
 
@@ -180,8 +187,6 @@ python -m venv venv
 
 # Windows
 venv\Scripts\activate
-
-
 ```
 
 ### Step 3 — Install Dependencies
@@ -200,12 +205,6 @@ GEMINI_API_KEY=your-google-gemini-api-key
 **Get API Keys:**
 - OpenWeatherMap: https://openweathermap.org/api (Free)
 - Google Gemini: https://aistudio.google.com (Free)
-
-
-
-
-
-
 
 ### Step 5 — Train ML Model
 ```bash
@@ -325,5 +324,8 @@ This project is developed for academic purposes at JSPM University, Pune.
 <div align="center">
   <strong>🌾 CropSense AI — Empowering Indian Farmers with Technology 🌾</strong>
   <br/>
-  Made with 💚 by Anuradha dwivedi CropSense AI — 
+  Made with 💚 by Anuradha Dwivedi
+  <br/><br/>
+  🌐 <a href="https://ai-powered-farming-assistance.onrender.com/">Live Demo</a> &nbsp;|&nbsp;
+  ⭐ Star this repo if you found it helpful!
 </div>
