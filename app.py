@@ -320,7 +320,7 @@ def api_detect_pest():
     try:
         gemini_key = os.environ.get('GEMINI_API_KEY', '')
         genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        model = genai.GenerativeModel('gemini-pro')
 
         img_bytes = file.read()
         img_b64   = base64.b64encode(img_bytes).decode()
