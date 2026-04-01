@@ -301,7 +301,7 @@ FARMING RULES:
 - Use relevant emojis
 - Maximum 200 words
 - Indian farming context only
-- Real crop names, fertilizer doses, government schemes""
+- Real crop names, fertilizer doses, government schemes"""
 
         response = model.generate_content(prompt)
         return jsonify({'reply': response.text, 'status': 'ok'})
