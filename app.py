@@ -272,7 +272,7 @@ def api_chat():
     try:
         gemini_key = os.environ.get('GEMINI_API_KEY', '')
         genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel('models/gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
 
         prompt = f"""You are CropSense AI — an expert Indian farming assistant.
 
@@ -320,7 +320,7 @@ def api_detect_pest():
     try:
         gemini_key = os.environ.get('GEMINI_API_KEY', '')
         genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel('models/gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
 
         img_bytes = file.read()
         img_b64   = base64.b64encode(img_bytes).decode()
