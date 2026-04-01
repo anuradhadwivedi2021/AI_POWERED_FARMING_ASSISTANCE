@@ -4,10 +4,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    SECRET_KEY         = os.environ.get('SECRET_KEY') or 'cropsense-secret-2024'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///farming.db'
+    SECRET_KEY                     = os.environ.get('SECRET_KEY') or 'cropsense-secret-2024'
+    SQLALCHEMY_DATABASE_URI        = os.environ.get('DATABASE_URL') or 'sqlite:///farming.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    UPLOAD_FOLDER      = 'uploads'
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024
-    WEATHER_API_KEY    = os.environ.get('98142f2fd0bb4a86e0a2c42605fccdab') or ''
-    GEMINI_API_KEY     = os.environ.get('AIzaSyBfF4lZ6QWHIqvMQCeO4o4NgZGdsH9GNVQ') or ''
+    UPLOAD_FOLDER                  = 'uploads'
+    MAX_CONTENT_LENGTH             = 16 * 1024 * 1024
+    WEATHER_API_KEY                = os.environ.get('WEATHER_API_KEY') or ''
+    GEMINI_API_KEY                 = os.environ.get('GEMINI_API_KEY') or ''
