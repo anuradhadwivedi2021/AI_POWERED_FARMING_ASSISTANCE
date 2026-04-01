@@ -10,3 +10,10 @@ numpy==1.26.4
 pillow==10.2.0
 gtts==2.5.1
 gunicorn==21.2.0
+<<<<<<< HEAD
+=======
+
+google-generativeai>=0.8.0
+>>>>>>> 45bb309ab610896c4a57ff69f7c3cfcb6ee7b61a
+
+
