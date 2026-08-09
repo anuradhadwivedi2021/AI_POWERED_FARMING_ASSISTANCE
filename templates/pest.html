@@ -626,6 +626,7 @@ async function detectPest() {
   formData.append('image', selectedFile);
   formData.append('crop_type', document.getElementById('cropType').value || 'unknown');
 
+
   try {
     const res  = await fetch('/api/detect_pest', { method:'POST', body:formData });
     const data = await res.json();

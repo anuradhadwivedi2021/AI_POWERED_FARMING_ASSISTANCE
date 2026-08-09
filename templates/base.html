@@ -210,19 +210,29 @@
     <span><span class="brand-crop">Crop</span><span class="brand-sense">Sense</span> AI</span>
   </a>
   <div class="navbar-menu">
+    <div class="lang-switcher" style="position:relative; margin-right:10px;">
+      <select onchange="window.location.href=this.options[this.selectedIndex].dataset.url"
+              style="background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2);
+                     border-radius:8px; padding:6px 10px; font-size:0.8rem; font-weight:600; cursor:pointer;">
+        {% for code, label in available_languages %}
+          <option value="{{ code }}" data-url="{{ url_for('set_language', lang=code) }}"
+                  {% if current_lang==code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
     {% if current_user.is_authenticated %}
       <div class="nav-user">
         <div class="nav-user-dot"></div>
         {{ current_user.name }}
       </div>
       <a href="{{ url_for('logout') }}" class="nav-btn nav-btn-logout">
-        <i class="fa fa-sign-out-alt"></i> Sign Out
+        <i class="fa fa-sign-out-alt"></i> {{ t('sign_out') }}
       </a>
     {% else %}
-      <a href="{{ url_for('login') }}"    class="nav-btn nav-btn-ghost">Sign In</a>
+      <a href="{{ url_for('login') }}"    class="nav-btn nav-btn-ghost">{{ t('sign_in') }}</a>
       <a href="{{ url_for('register') }}" class="nav-btn"
          style="background:#2d6a4f;color:white;border:1px solid #40916c;">
-        Get Started →
+        {{ t('get_started') }}
       </a>
     {% endif %}
   </div>
@@ -252,6 +262,10 @@
     <a href="{{ url_for('dashboard') }}"
        class="sidebar-item {% if request.endpoint=='dashboard' %}active{% endif %}">
       <span class="icon">🏠</span> Dashboard
+    </a>
+    <a href="{{ url_for('profile') }}"
+       class="sidebar-item {% if request.endpoint=='profile' %}active{% endif %}">
+      <span class="icon">👤</span> My Profile
     </a>
 
     <div class="sidebar-section">Farming Tools</div>

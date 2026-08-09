@@ -33,6 +33,22 @@
   align-items:center;
   gap:6px;
 }
+.lang-toggle-btn {
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.25);
+  border-radius:20px;
+  padding:8px 16px;
+  font-size:0.8rem;
+  font-weight:700;
+  color:white;
+  cursor:pointer;
+  font-family:'Inter',sans-serif;
+  transition:all 0.2s;
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.lang-toggle-btn:hover { background:rgba(255,255,255,0.22); }
 
 .crop-grid {
   display: grid;
@@ -212,6 +228,45 @@
   margin-top:1rem;
 }
 
+/* Soil Health Card Upload */
+.soil-card-box {
+  background:linear-gradient(135deg,#f0faf4,#e8f5e9);
+  border:1.5px dashed #74c69d;
+  border-radius:16px;
+  padding:1.3rem 1.2rem;
+  text-align:center;
+  margin-bottom:1.2rem;
+  transition:all 0.2s;
+}
+.soil-card-box.dragover { border-color:#2d6a4f;background:#e8f5e9; }
+.soil-card-icon  { font-size:2rem;margin-bottom:0.4rem; }
+.soil-card-title { font-size:0.9rem;font-weight:800;color:#0a2e1a;margin-bottom:2px; }
+.soil-card-sub   { font-size:0.76rem;color:#52796f;margin-bottom:0.9rem;line-height:1.5; }
+.soil-card-btn {
+  padding:9px 18px;
+  background:white;
+  border:1.5px solid #2d6a4f;
+  color:#2d6a4f;
+  border-radius:10px;
+  font-family:'Inter',sans-serif;
+  font-size:0.82rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.soil-card-btn:hover { background:#2d6a4f;color:white; }
+.soil-card-btn:disabled { opacity:0.6;cursor:not-allowed; }
+.soil-card-status {
+  margin-top:0.8rem;
+  font-size:0.78rem;
+  font-weight:600;
+  border-radius:8px;
+  padding:8px 12px;
+}
+.soil-card-status.ok   { background:#e8f5e9;color:#1b4332; }
+.soil-card-status.err  { background:#fff8e1;color:#856404; }
+.soil-card-status.busy { background:#f0faf4;color:#52796f; }
+
 /* Mode Toggle */
 .mode-toggle {
   display:flex;
@@ -279,11 +334,16 @@
   <!-- Hero -->
   <div class="crop-hero">
     <div>
-      <div class="crop-hero-title">🌱 Crop Recommendation</div>
-      <div class="crop-hero-sub">ML Model (99.55% accurate) + AI powered suggestions</div>
+      <div class="crop-hero-title" data-i18n="hero_title">🌱 Crop Recommendation</div>
+      <div class="crop-hero-sub" data-i18n="hero_sub">ML Model (99.55% accurate) + AI powered suggestions</div>
     </div>
-    <div class="crop-hero-badge">
-      <span>🧪</span> Scikit-learn + Gemini AI
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <div class="crop-hero-badge">
+        <span>🧪</span> <span data-i18n="hero_badge">Scikit-learn + Gemini AI</span>
+      </div>
+      <button class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLanguage()" title="Switch language / भाषा बदलें">
+        🌐 <span id="langToggleLabel">EN</span>
+      </button>
     </div>
   </div>
 
@@ -294,19 +354,31 @@
       <div class="form-card-header">
         <div class="form-card-header-icon" style="background:#2d6a4f;">📋</div>
         <div>
-          <div class="form-card-header-title">Enter Farm Details</div>
-          <div class="form-card-header-sub">More data = better accuracy</div>
+          <div class="form-card-header-title" data-i18n="form_header_title">Enter Farm Details</div>
+          <div class="form-card-header-sub" data-i18n="form_header_sub">More data = better accuracy</div>
         </div>
       </div>
       <div class="form-card-body">
 
+        <!-- Soil Health Card Upload -->
+        <div id="soilCardBox" class="soil-card-box">
+          <input type="file" id="soilCardInput" accept="image/*" style="display:none" onchange="uploadSoilCard(this)"/>
+          <div class="soil-card-icon">📇</div>
+          <div class="soil-card-title" data-i18n="soil_card_title">Soil Health Card hai aapke paas?</div>
+          <div class="soil-card-sub" data-i18n="soil_card_sub">Govt card ki photo lo, N-P-K aur pH khud fill ho jaayenge</div>
+          <button class="soil-card-btn" onclick="document.getElementById('soilCardInput').click()">
+            📷 <span data-i18n="soil_card_btn">Card Ki Photo Upload Karo</span>
+          </button>
+          <div id="soilCardStatus" class="soil-card-status" style="display:none;"></div>
+        </div>
+
         <!-- Mode Toggle -->
         <div class="mode-toggle">
           <button class="mode-btn active" id="btnML" onclick="switchMode('ml')">
-            🧪 ML Model (NPK)
+            🧪 <span data-i18n="mode_ml">ML Model (NPK)</span>
           </button>
           <button class="mode-btn" id="btnSimple" onclick="switchMode('simple')">
-            🌍 Simple (Soil+Season)
+            🌍 <span data-i18n="mode_simple">Simple (Soil+Season)</span>
           </button>
         </div>
 
@@ -314,101 +386,101 @@
         <div id="mlMode">
           <div class="fields-row">
             <div class="field-group">
-              <label class="field-label">🟦 Nitrogen (N)</label>
+              <label class="field-label">🟦 <span data-i18n="label_n">Nitrogen (N)</span></label>
               <input type="number" id="mlN" class="field-input" placeholder="0–140" value="90" min="0" max="140"/>
             </div>
             <div class="field-group">
-              <label class="field-label">🟧 Phosphorus (P)</label>
+              <label class="field-label">🟧 <span data-i18n="label_p">Phosphorus (P)</span></label>
               <input type="number" id="mlP" class="field-input" placeholder="5–145" value="42" min="0" max="145"/>
             </div>
           </div>
           <div class="fields-row">
             <div class="field-group">
-              <label class="field-label">🟩 Potassium (K)</label>
+              <label class="field-label">🟩 <span data-i18n="label_k">Potassium (K)</span></label>
               <input type="number" id="mlK" class="field-input" placeholder="5–205" value="43" min="0" max="205"/>
             </div>
             <div class="field-group">
-              <label class="field-label">🌡️ Temperature (°C)</label>
+              <label class="field-label">🌡️ <span data-i18n="label_temp">Temperature (°C)</span></label>
               <input type="number" id="mlTemp" class="field-input" placeholder="8–43" value="20" step="0.1"/>
             </div>
           </div>
           <div class="fields-row">
             <div class="field-group">
-              <label class="field-label">💧 Humidity (%)</label>
+              <label class="field-label">💧 <span data-i18n="label_humidity">Humidity (%)</span></label>
               <input type="number" id="mlHumidity" class="field-input" placeholder="14–99" value="82" step="0.1"/>
             </div>
             <div class="field-group">
-              <label class="field-label">⚗️ pH Level</label>
+              <label class="field-label">⚗️ <span data-i18n="label_ph">pH Level</span></label>
               <input type="number" id="mlPh" class="field-input" placeholder="3.5–9.9" value="6.5" step="0.1"/>
             </div>
           </div>
           <div class="field-group">
-            <label class="field-label">🌧️ Rainfall (mm/year)</label>
+            <label class="field-label">🌧️ <span data-i18n="label_rainfall">Rainfall (mm/year)</span></label>
             <input type="number" id="mlRainfall" class="field-input" placeholder="20–298" value="202" step="0.1"/>
           </div>
 
           <!-- Presets -->
           <div style="margin-bottom:1rem;">
-            <div style="font-size:0.7rem;font-weight:700;color:#52796f;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">
+            <div data-i18n="quick_presets" style="font-size:0.7rem;font-weight:700;color:#52796f;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">
               Quick Presets
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
-              <button class="preset-btn" onclick="setPreset(90,42,43,20.87,82,6.5,202)">🌾 Rice</button>
-              <button class="preset-btn" onclick="setPreset(20,50,50,25,80,6.5,150)">🌿 Wheat</button>
-              <button class="preset-btn" onclick="setPreset(40,30,30,30,50,7,50)">🌸 Cotton</button>
-              <button class="preset-btn" onclick="setPreset(100,60,50,27,90,5.5,250)">🍌 Banana</button>
-              <button class="preset-btn" onclick="setPreset(20,30,20,25,65,7.5,90)">🫘 Chickpea</button>
-              <button class="preset-btn" onclick="setPreset(120,60,40,30,70,6,200)">🎋 Sugarcane</button>
+              <button class="preset-btn" onclick="setPreset(90,42,43,20.87,82,6.5,202)">🌾 <span data-i18n="crop_rice">Rice</span></button>
+              <button class="preset-btn" onclick="setPreset(20,50,50,25,80,6.5,150)">🌿 <span data-i18n="crop_wheat">Wheat</span></button>
+              <button class="preset-btn" onclick="setPreset(40,30,30,30,50,7,50)">🌸 <span data-i18n="crop_cotton">Cotton</span></button>
+              <button class="preset-btn" onclick="setPreset(100,60,50,27,90,5.5,250)">🍌 <span data-i18n="crop_banana">Banana</span></button>
+              <button class="preset-btn" onclick="setPreset(20,30,20,25,65,7.5,90)">🫘 <span data-i18n="crop_chickpea">Chickpea</span></button>
+              <button class="preset-btn" onclick="setPreset(120,60,40,30,70,6,200)">🎋 <span data-i18n="crop_sugarcane">Sugarcane</span></button>
             </div>
           </div>
 
           <button class="crop-submit" onclick="getMLCrop()">
-            🧪 Predict with ML Model (99.55% accurate)
+            🧪 <span data-i18n="predict_ml_btn">Predict with ML Model (99.55% accurate)</span>
           </button>
         </div>
 
         <!-- SIMPLE MODE -->
         <div id="simpleMode" style="display:none;">
           <div class="field-group">
-            <label class="field-label">🌍 Soil Type</label>
+            <label class="field-label">🌍 <span data-i18n="label_soil_type">Soil Type</span></label>
             <select id="soilType" class="field-input">
-              <option value="">-- Select soil type --</option>
-              <option value="alluvial">Alluvial Soil</option>
-              <option value="black">Black Cotton Soil</option>
-              <option value="red">Red Soil</option>
-              <option value="sandy">Sandy Soil</option>
-              <option value="clay">Clay Soil</option>
-              <option value="loamy">Loamy Soil</option>
+              <option value="" data-i18n="opt_select_soil">-- Select soil type --</option>
+              <option value="alluvial" data-i18n="opt_alluvial">Alluvial Soil</option>
+              <option value="black" data-i18n="opt_black">Black Cotton Soil</option>
+              <option value="red" data-i18n="opt_red">Red Soil</option>
+              <option value="sandy" data-i18n="opt_sandy">Sandy Soil</option>
+              <option value="clay" data-i18n="opt_clay">Clay Soil</option>
+              <option value="loamy" data-i18n="opt_loamy">Loamy Soil</option>
             </select>
           </div>
           <div class="field-group">
-            <label class="field-label">🗓️ Growing Season</label>
+            <label class="field-label">🗓️ <span data-i18n="label_season">Growing Season</span></label>
             <select id="season" class="field-input">
-              <option value="">-- Select season --</option>
-              <option value="kharif">Kharif (June – October)</option>
-              <option value="rabi">Rabi (October – March)</option>
-              <option value="zaid">Zaid (March – June)</option>
+              <option value="" data-i18n="opt_select_season">-- Select season --</option>
+              <option value="kharif" data-i18n="opt_kharif">Kharif (June – October)</option>
+              <option value="rabi" data-i18n="opt_rabi">Rabi (October – March)</option>
+              <option value="zaid" data-i18n="opt_zaid">Zaid (March – June)</option>
             </select>
           </div>
           <div class="fields-row">
             <div class="field-group">
-              <label class="field-label">🌡️ Temperature (°C)</label>
+              <label class="field-label">🌡️ <span data-i18n="label_temp">Temperature (°C)</span></label>
               <input type="number" id="temperature" class="field-input" placeholder="e.g. 28"/>
             </div>
             <div class="field-group">
-              <label class="field-label">💧 Humidity (%)</label>
+              <label class="field-label">💧 <span data-i18n="label_humidity">Humidity (%)</span></label>
               <input type="number" id="humidity" class="field-input" placeholder="e.g. 65"/>
             </div>
           </div>
           <div class="fields-row">
             <div class="field-group">
-              <label class="field-label">🌧️ Rainfall (mm/yr)</label>
+              <label class="field-label">🌧️ <span data-i18n="label_rainfall_yr">Rainfall (mm/yr)</span></label>
               <input type="number" id="rainfall" class="field-input" placeholder="e.g. 800"/>
             </div>
             <div class="field-group">
-              <label class="field-label">📍 State</label>
+              <label class="field-label">📍 <span data-i18n="label_state">State</span></label>
               <select id="state" class="field-input">
-                <option value="">-- State --</option>
+                <option value="" data-i18n="opt_select_state">-- State --</option>
                 <option>Maharashtra</option>
                 <option>Punjab</option>
                 <option>Uttar Pradesh</option>
@@ -425,7 +497,7 @@
             </div>
           </div>
           <button class="crop-submit" onclick="getSimpleCrop()">
-            🌱 Get Recommendation
+            🌱 <span data-i18n="get_recommendation_btn">Get Recommendation</span>
           </button>
         </div>
 
@@ -437,15 +509,15 @@
 
       <div class="empty-state" id="emptyState">
         <div class="empty-icon">🌾</div>
-        <div class="empty-title">Ready to Recommend!</div>
-        <div class="empty-sub">
+        <div class="empty-title" data-i18n="empty_title">Ready to Recommend!</div>
+        <div class="empty-sub" data-i18n="empty_sub">
           Choose ML Model for highest accuracy<br/>
           or Simple mode for quick suggestions
         </div>
         <div style="margin-top:1rem;display:flex;justify-content:center;gap:0.5rem;flex-wrap:wrap;">
-          <span style="background:#d8f3dc;color:#1b4332;padding:4px 10px;border-radius:8px;font-size:0.72rem;font-weight:600;">22 Crops</span>
-          <span style="background:#d8f3dc;color:#1b4332;padding:4px 10px;border-radius:8px;font-size:0.72rem;font-weight:600;">2200 Samples</span>
-          <span style="background:#d8f3dc;color:#1b4332;padding:4px 10px;border-radius:8px;font-size:0.72rem;font-weight:600;">99.55% Accuracy</span>
+          <span style="background:#d8f3dc;color:#1b4332;padding:4px 10px;border-radius:8px;font-size:0.72rem;font-weight:600;" data-i18n="badge_crops">22 Crops</span>
+          <span style="background:#d8f3dc;color:#1b4332;padding:4px 10px;border-radius:8px;font-size:0.72rem;font-weight:600;" data-i18n="badge_samples">2200 Samples</span>
+          <span style="background:#d8f3dc;color:#1b4332;padding:4px 10px;border-radius:8px;font-size:0.72rem;font-weight:600;" data-i18n="badge_accuracy">99.55% Accuracy</span>
         </div>
       </div>
 
@@ -471,7 +543,7 @@
         <div class="info-card" id="top3Card" style="display:none;">
           <div class="info-card-header">
             <div class="info-card-icon" style="background:#e8f0fe;">🏆</div>
-            <div class="info-card-title">Top 3 Recommendations</div>
+            <div class="info-card-title" data-i18n="top3_title">Top 3 Recommendations</div>
           </div>
           <div class="info-card-body" id="top3Body"></div>
         </div>
@@ -479,7 +551,7 @@
         <div class="info-card">
           <div class="info-card-header">
             <div class="info-card-icon" style="background:#d8f3dc;">📊</div>
-            <div class="info-card-title">Crop Details</div>
+            <div class="info-card-title" data-i18n="crop_details_title">Crop Details</div>
           </div>
           <div class="info-card-body" id="cropDetails"></div>
         </div>
@@ -487,7 +559,7 @@
         <div class="info-card">
           <div class="info-card-header">
             <div class="info-card-icon" style="background:#fff3cd;">💊</div>
-            <div class="info-card-title">Fertilizer Recommendation</div>
+            <div class="info-card-title" data-i18n="fertilizer_title">Fertilizer Recommendation</div>
           </div>
           <div class="info-card-body" id="fertilizerAdvice"></div>
         </div>
@@ -497,7 +569,7 @@
       <div id="cropError" style="display:none;">
         <div style="background:#ffe0e0;border:1.5px solid #ffb3b3;border-radius:16px;
                     padding:1.2rem;color:#7d0000;font-size:0.88rem;">
-          ❌ Please fill all required fields!
+          ❌ <span data-i18n="error_fill_fields">Please fill all required fields!</span>
         </div>
       </div>
 
@@ -508,6 +580,126 @@
 
 {% block extra_js %}
 <script>
+// ══════════════════════════════════════════════════
+// LANGUAGE SYSTEM — default English, auto-detects
+// system/browser language, and can be toggled manually.
+// Choice is remembered for next visit.
+// ══════════════════════════════════════════════════
+const translations = {
+  en: {
+    hero_title: '🌱 Crop Recommendation',
+    hero_sub: 'ML Model (99.55% accurate) + AI powered suggestions',
+    hero_badge: 'Scikit-learn + Gemini AI',
+    form_header_title: 'Enter Farm Details',
+    form_header_sub: 'More data = better accuracy',
+    soil_card_title: 'Have a Soil Health Card?',
+    soil_card_sub: 'Take a photo of your govt card, N-P-K and pH will fill in automatically',
+    soil_card_btn: 'Upload Card Photo',
+    mode_ml: 'ML Model (NPK)',
+    mode_simple: 'Simple (Soil+Season)',
+    label_n: 'Nitrogen (N)', label_p: 'Phosphorus (P)', label_k: 'Potassium (K)',
+    label_temp: 'Temperature (°C)', label_humidity: 'Humidity (%)', label_ph: 'pH Level',
+    label_rainfall: 'Rainfall (mm/year)', label_rainfall_yr: 'Rainfall (mm/yr)',
+    label_soil_type: 'Soil Type', label_season: 'Growing Season', label_state: 'State',
+    quick_presets: 'Quick Presets',
+    crop_rice: 'Rice', crop_wheat: 'Wheat', crop_cotton: 'Cotton',
+    crop_banana: 'Banana', crop_chickpea: 'Chickpea', crop_sugarcane: 'Sugarcane',
+    predict_ml_btn: 'Predict with ML Model (99.55% accurate)',
+    get_recommendation_btn: 'Get Recommendation',
+    opt_select_soil: '-- Select soil type --',
+    opt_alluvial: 'Alluvial Soil', opt_black: 'Black Cotton Soil', opt_red: 'Red Soil',
+    opt_sandy: 'Sandy Soil', opt_clay: 'Clay Soil', opt_loamy: 'Loamy Soil',
+    opt_select_season: '-- Select season --',
+    opt_kharif: 'Kharif (June – October)', opt_rabi: 'Rabi (October – March)', opt_zaid: 'Zaid (March – June)',
+    opt_select_state: '-- State --',
+    empty_title: 'Ready to Recommend!',
+    empty_sub: 'Choose ML Model for highest accuracy<br/>or Simple mode for quick suggestions',
+    badge_crops: '22 Crops', badge_samples: '2200 Samples', badge_accuracy: '99.55% Accuracy',
+    top3_title: 'Top 3 Recommendations',
+    crop_details_title: 'Crop Details',
+    fertilizer_title: 'Fertilizer Recommendation',
+    error_fill_fields: 'Please fill all required fields!',
+    loading_ml_title: 'ML Model analyzing 100 decision trees...',
+    loading_ml_sub: 'Random Forest processing your soil data',
+    loading_simple_title: 'Analyzing soil & season data...',
+    loading_simple_sub: 'Finding best crop for your conditions',
+    toast_preset: 'Preset loaded! Click Predict now.',
+    toast_soilcard_ok: 'Soil card values auto-filled!',
+  },
+  hi: {
+    hero_title: '🌱 फसल सुझाव',
+    hero_sub: 'ML मॉडल (99.55% सटीक) + AI आधारित सुझाव',
+    hero_badge: 'Scikit-learn + Gemini AI',
+    form_header_title: 'खेत की जानकारी भरें',
+    form_header_sub: 'ज़्यादा जानकारी = बेहतर सटीकता',
+    soil_card_title: 'आपके पास Soil Health Card है?',
+    soil_card_sub: 'सरकारी कार्ड की फोटो लें, N-P-K और pH खुद भर जाएंगे',
+    soil_card_btn: 'कार्ड की फोटो अपलोड करें',
+    mode_ml: 'ML मॉडल (NPK)',
+    mode_simple: 'आसान (मिट्टी+मौसम)',
+    label_n: 'नाइट्रोजन (N)', label_p: 'फॉस्फोरस (P)', label_k: 'पोटैशियम (K)',
+    label_temp: 'तापमान (°C)', label_humidity: 'नमी (%)', label_ph: 'pH स्तर',
+    label_rainfall: 'वर्षा (mm/वर्ष)', label_rainfall_yr: 'वर्षा (mm/वर्ष)',
+    label_soil_type: 'मिट्टी का प्रकार', label_season: 'फसल का मौसम', label_state: 'राज्य',
+    quick_presets: 'क्विक प्रीसेट',
+    crop_rice: 'चावल', crop_wheat: 'गेहूं', crop_cotton: 'कपास',
+    crop_banana: 'केला', crop_chickpea: 'चना', crop_sugarcane: 'गन्ना',
+    predict_ml_btn: 'ML मॉडल से भविष्यवाणी करें (99.55% सटीक)',
+    get_recommendation_btn: 'सुझाव पाएं',
+    opt_select_soil: '-- मिट्टी का प्रकार चुनें --',
+    opt_alluvial: 'जलोढ़ मिट्टी', opt_black: 'काली कपास मिट्टी', opt_red: 'लाल मिट्टी',
+    opt_sandy: 'रेतीली मिट्टी', opt_clay: 'चिकनी मिट्टी', opt_loamy: 'दोमट मिट्टी',
+    opt_select_season: '-- मौसम चुनें --',
+    opt_kharif: 'खरीफ (जून – अक्टूबर)', opt_rabi: 'रबी (अक्टूबर – मार्च)', opt_zaid: 'ज़ैद (मार्च – जून)',
+    opt_select_state: '-- राज्य --',
+    empty_title: 'सुझाव देने के लिए तैयार!',
+    empty_sub: 'सबसे सटीक नतीजे के लिए ML मॉडल चुनें<br/>या तुरंत सुझाव के लिए Simple mode',
+    badge_crops: '22 फसलें', badge_samples: '2200 नमूने', badge_accuracy: '99.55% सटीकता',
+    top3_title: 'टॉप 3 सुझाव',
+    crop_details_title: 'फसल विवरण',
+    fertilizer_title: 'खाद की सलाह',
+    error_fill_fields: 'कृपया सभी जरूरी जानकारी भरें!',
+    loading_ml_title: 'ML मॉडल 100 डिसीजन ट्री जांच रहा है...',
+    loading_ml_sub: 'Random Forest आपकी मिट्टी का डेटा प्रोसेस कर रहा है',
+    loading_simple_title: 'मिट्टी और मौसम का डेटा जांचा जा रहा है...',
+    loading_simple_sub: 'आपकी स्थिति के लिए सबसे अच्छी फसल खोजी जा रही है',
+    toast_preset: 'प्रीसेट लोड हो गया! अब Predict दबाएं।',
+    toast_soilcard_ok: 'Soil card की वैल्यू अपने आप भर गईं!',
+  }
+};
+
+let currentLang = 'en';
+
+function t(key) {
+  return (translations[currentLang] && translations[currentLang][key]) || translations.en[key] || key;
+}
+
+function applyLanguage(lang) {
+  currentLang = translations[lang] ? lang : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (translations[currentLang][key] !== undefined) {
+      el.innerHTML = translations[currentLang][key];
+    }
+  });
+  const label = document.getElementById('langToggleLabel');
+  if (label) label.textContent = currentLang === 'hi' ? 'हिं' : 'EN';
+  localStorage.setItem('cropsense_lang', currentLang);
+}
+
+function toggleLanguage() {
+  applyLanguage(currentLang === 'en' ? 'hi' : 'en');
+}
+
+function detectInitialLanguage() {
+  const saved = localStorage.getItem('cropsense_lang');
+  if (saved) return saved;
+  const sysLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+  return sysLang.startsWith('hi') ? 'hi' : 'en';
+}
+
+applyLanguage(detectInitialLanguage());
+
 // ── MODE TOGGLE ──────────────────────────────────
 let currentMode = 'ml';
 
@@ -536,6 +728,53 @@ function setPreset(n,p,k,temp,hum,ph,rain) {
   document.getElementById('mlPh').value       = ph;
   document.getElementById('mlRainfall').value = rain;
   if (typeof showToast === 'function') showToast('Preset loaded! Click Predict now.', 'info');
+}
+
+// ── SOIL HEALTH CARD UPLOAD ───────────────────────
+async function uploadSoilCard(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('soilCardStatus');
+  const btn      = document.querySelector('.soil-card-btn');
+
+  statusEl.style.display = 'block';
+  statusEl.className     = 'soil-card-status busy';
+  statusEl.innerHTML     = '⏳ Card padhi ja rahi hai...';
+  btn.disabled            = true;
+
+  const formData = new FormData();
+  formData.append('card_image', file);
+
+  try {
+    const res  = await fetch('/api/read_soil_card', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (!data.found) {
+      statusEl.className = 'soil-card-status err';
+      statusEl.innerHTML = '⚠️ ' + (data.note || 'Card clearly nahi padhi ja saki. Saaf photo lo aur dobara try karo.');
+      return;
+    }
+
+    // Auto-fill ML mode fields wherever a value was found
+    if (data.N  !== null && data.N  !== undefined) document.getElementById('mlN').value  = data.N;
+    if (data.P  !== null && data.P  !== undefined) document.getElementById('mlP').value  = data.P;
+    if (data.K  !== null && data.K  !== undefined) document.getElementById('mlK').value  = data.K;
+    if (data.ph !== null && data.ph !== undefined) document.getElementById('mlPh').value = data.ph;
+
+    switchMode('ml');
+    statusEl.className = 'soil-card-status ok';
+    statusEl.innerHTML  = '✅ Values fill ho gaye! Ab neeche Temperature, Humidity, Rainfall check karke Predict dabao.'
+                        + (data.note ? '<br>ℹ️ ' + data.note : '');
+    if (typeof showToast === 'function') showToast('Soil card se NPK/pH auto-filled!', 'success');
+
+  } catch (err) {
+    statusEl.className = 'soil-card-status err';
+    statusEl.innerHTML = '❌ Upload fail ho gaya. Dobara try karo.';
+  } finally {
+    btn.disabled = false;
+    input.value = '';
+  }
 }
 
 // ── CROP ICONS ───────────────────────────────────

@@ -97,6 +97,118 @@
 .t-up   { color:#2d6a4f;font-weight:700; }
 .t-down { color:#e63946;font-weight:700; }
 
+/* ── AI SELL-TIMING ADVISOR ── */
+.advisor-card {
+  background:white;
+  border-radius:20px;
+  border:1.5px solid #e8f5e9;
+  overflow:hidden;
+  margin-bottom:1.5rem;
+  box-shadow:0 4px 20px rgba(45,106,79,0.06);
+}
+.advisor-header {
+  background:linear-gradient(135deg,#0a2e1a,#1b4332,#2d6a4f);
+  padding:1.3rem 1.5rem;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:relative;
+  overflow:hidden;
+}
+.advisor-header::before { content:'🕐';position:absolute;font-size:6rem;right:-0.5rem;top:-1rem;opacity:0.08; }
+.advisor-header-title { font-size:1.1rem;font-weight:900; }
+.advisor-header-sub   { font-size:0.78rem;opacity:0.7;margin-top:2px; }
+.advisor-badge {
+  background:rgba(116,198,157,0.2);
+  border:1px solid rgba(116,198,157,0.3);
+  border-radius:20px;
+  padding:6px 14px;
+  font-size:0.72rem;
+  font-weight:700;
+  color:#74c69d;
+  position:relative;
+  z-index:2;
+}
+.advisor-body { padding:1.4rem 1.5rem; }
+.advisor-form-row {
+  display:grid;
+  grid-template-columns:1.3fr 1fr 1fr auto;
+  gap:0.9rem;
+  align-items:end;
+}
+.advisor-field-label {
+  display:block;
+  font-size:0.7rem;
+  font-weight:700;
+  color:#52796f;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  margin-bottom:5px;
+}
+.advisor-input {
+  width:100%;
+  padding:11px 14px;
+  border:1.5px solid #d8f3dc;
+  border-radius:10px;
+  font-family:'Inter',sans-serif;
+  font-size:0.88rem;
+  color:#1b4332;
+  background:#f8fffe;
+  outline:none;
+  transition:all 0.2s;
+}
+.advisor-input:focus { border-color:#2d6a4f;background:white;box-shadow:0 0 0 3px rgba(45,106,79,0.08); }
+.advisor-btn {
+  padding:11px 20px;
+  background:linear-gradient(135deg,#1b4332,#2d6a4f);
+  color:white;
+  border:none;
+  border-radius:10px;
+  font-family:'Inter',sans-serif;
+  font-size:0.85rem;
+  font-weight:700;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all 0.2s;
+}
+.advisor-btn:hover { transform:translateY(-2px);box-shadow:0 8px 20px rgba(45,106,79,0.3); }
+.advisor-btn:disabled { opacity:0.6;cursor:not-allowed;transform:none; }
+
+.advisor-result {
+  margin-top:1.2rem;
+  display:none;
+}
+.advisor-result.show { display:block;animation:fadeInAdvisor 0.4s ease; }
+@keyframes fadeInAdvisor { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+.advisor-verdict {
+  border-radius:16px;
+  padding:1.2rem 1.4rem;
+  display:flex;
+  align-items:flex-start;
+  gap:1rem;
+  margin-bottom:1rem;
+}
+.advisor-verdict.sell-now { background:#e8f5e9;border:1.5px solid #b7e4c7; }
+.advisor-verdict.wait     { background:#fff8e1;border:1.5px solid #ffe082; }
+.advisor-verdict-icon { font-size:2.2rem; }
+.advisor-verdict-title { font-size:1.05rem;font-weight:900;color:#0a2e1a;margin-bottom:4px; }
+.advisor-verdict-reason { font-size:0.85rem;color:#52796f;line-height:1.6; }
+
+.advisor-meta-row { display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.8rem; }
+.advisor-meta-box {
+  background:#f8fffe;
+  border:1px solid #e8f5e9;
+  border-radius:12px;
+  padding:0.9rem;
+  text-align:center;
+}
+.advisor-meta-val { font-size:1rem;font-weight:800;color:#1b4332; }
+.advisor-meta-lbl { font-size:0.68rem;color:#52796f;margin-top:2px;text-transform:uppercase;letter-spacing:0.3px; }
+
+.advisor-loading { text-align:center;padding:1rem;color:#52796f;font-size:0.85rem; }
+
 /* ── CONTROLS ── */
 .controls-row {
   display: grid;
@@ -293,6 +405,47 @@
     </div>
   </div>
 
+  <!-- AI Sell-Timing Advisor -->
+  <div class="advisor-card">
+    <div class="advisor-header">
+      <div>
+        <div class="advisor-header-title">🕐 When Should I Sell? — AI Sell-Timing Advisor</div>
+        <div class="advisor-header-sub">Know the best time to sell, based on weather + price trends</div>
+      </div>
+      <div class="advisor-badge">✨ Gemini AI</div>
+    </div>
+    <div class="advisor-body">
+      <div class="advisor-form-row">
+        <div>
+          <label class="advisor-field-label">🌾 Crop</label>
+          <select class="advisor-input" id="advisorCrop">
+            <option value="">-- Select crop --</option>
+          </select>
+        </div>
+        <div>
+          <label class="advisor-field-label">⚖️ Quantity</label>
+          <input type="number" class="advisor-input" id="advisorQty" placeholder="e.g. 20" min="1"/>
+        </div>
+        <div>
+          <label class="advisor-field-label">📏 Unit</label>
+          <select class="advisor-input" id="advisorUnit">
+            <option value="quintal">Quintal</option>
+            <option value="kg">Kg</option>
+          </select>
+        </div>
+        <button class="advisor-btn" id="advisorBtn" onclick="getSellAdvice()">
+          🔮 Get Advice
+        </button>
+      </div>
+
+      <div class="advisor-loading" id="advisorLoading" style="display:none;">
+        ⏳ Checking weather and price trends...
+      </div>
+
+      <div class="advisor-result" id="advisorResult"></div>
+    </div>
+  </div>
+
   <!-- Live Ticker -->
   <div class="ticker-wrap">
     <div class="ticker-label">
@@ -480,5 +633,102 @@ document.getElementById('lastTime').textContent =
 
 buildTicker();
 renderPrices(marketData);
+
+// ── AI SELL-TIMING ADVISOR ────────────────────────
+function populateAdvisorCropList() {
+  const select = document.getElementById('advisorCrop');
+  const seen   = new Set();
+  marketData.forEach(item => {
+    if (seen.has(item.name)) return;
+    seen.add(item.name);
+    const opt = document.createElement('option');
+    opt.value = item.name;
+    opt.textContent = `${item.icon} ${item.name}`;
+    select.appendChild(opt);
+  });
+}
+populateAdvisorCropList();
+
+async function getSellAdvice() {
+  const cropName = document.getElementById('advisorCrop').value;
+  const qty      = document.getElementById('advisorQty').value;
+  const unit     = document.getElementById('advisorUnit').value;
+
+  const resultBox  = document.getElementById('advisorResult');
+  const loadingBox = document.getElementById('advisorLoading');
+  const btn        = document.getElementById('advisorBtn');
+
+  if (!cropName || !qty) {
+    if (typeof showToast === 'function') showToast('Please select a crop and enter quantity!', 'danger');
+    return;
+  }
+
+  const cropData = marketData.find(c => c.name === cropName);
+
+  resultBox.classList.remove('show');
+  resultBox.innerHTML = '';
+  loadingBox.style.display = 'block';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/sell_advisory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        crop: cropName,
+        quantity: qty,
+        unit: unit,
+        current_price: cropData ? cropData.price : null,
+        today_change: cropData ? cropData.change : null
+      })
+    });
+    const data = await res.json();
+
+    const verdictCls  = data.verdict === 'sell_now' ? 'sell-now' : 'wait';
+    const verdictIcon  = data.verdict === 'sell_now' ? '✅' : '⏳';
+    const verdictTitle = data.verdict === 'sell_now'
+      ? 'Sell Now!'
+      : `Wait — selling in ${data.wait_days || 'a few'} days will be better`;
+
+    resultBox.innerHTML = `
+      <div class="advisor-verdict ${verdictCls}">
+        <div class="advisor-verdict-icon">${verdictIcon}</div>
+        <div>
+          <div class="advisor-verdict-title">${verdictTitle}</div>
+          <div class="advisor-verdict-reason">${data.reason || ''}</div>
+        </div>
+      </div>
+      <div class="advisor-meta-row">
+        <div class="advisor-meta-box">
+          <div class="advisor-meta-val">₹${(data.current_price ?? cropData?.price ?? '--')}</div>
+          <div class="advisor-meta-lbl">Aaj Ka Price</div>
+        </div>
+        <div class="advisor-meta-box">
+          <div class="advisor-meta-val">${data.expected_trend || '--'}</div>
+          <div class="advisor-meta-lbl">Trend</div>
+        </div>
+        <div class="advisor-meta-box">
+          <div class="advisor-meta-val">₹${(data.estimated_total ?? '--')}</div>
+          <div class="advisor-meta-lbl">Estimated Total</div>
+        </div>
+      </div>
+    `;
+    resultBox.classList.add('show');
+
+  } catch (err) {
+    resultBox.innerHTML = `
+      <div class="advisor-verdict wait">
+        <div class="advisor-verdict-icon">⚠️</div>
+        <div>
+          <div class="advisor-verdict-title">Couldn't load advice</div>
+          <div class="advisor-verdict-reason">Please try again.</div>
+        </div>
+      </div>`;
+    resultBox.classList.add('show');
+  } finally {
+    loadingBox.style.display = 'none';
+    btn.disabled = false;
+  }
+}
 </script>
 {% endblock %}

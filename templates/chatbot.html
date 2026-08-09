@@ -604,10 +604,21 @@ function addMessage(text, isUser) {
   const time      = getTime();
   const div       = document.createElement('div');
   div.className   = `msg ${isUser ? 'user' : ''}`;
-  div.innerHTML   = `
+  
+  // Speaker button sirf bot messages mein
+  const speakerBtn = isUser ? '' : `
+  <button onclick="speakText(this, \`${text.replace(/`/g, '')}\`)" 
+    style="background:none;border:1.5px solid #d8f3dc;border-radius:8px;
+           padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#2d6a4f;
+           margin-top:4px;">
+    🔊 Suno
+  </button>`;
+
+div.innerHTML = `
     <div class="msg-avatar ${isUser ? 'user' : 'bot'}">${isUser ? '👤' : '🌾'}</div>
     <div class="msg-content">
       <div class="msg-bubble ${isUser ? 'user' : 'bot'}">${text}</div>
+      ${speakerBtn}
       <div class="msg-time">${time}</div>
     </div>`;
   container.appendChild(div);
@@ -707,5 +718,82 @@ function toggleVoice() {
   };
   recognition.start();
 }
+
+
+
+
+
+async function speakText(btn, text) {
+  try {
+    btn.textContent = '⏳...';
+    btn.disabled = true;
+    const cleanText = text.replace(/<[^>]*>/g, '').trim();
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: cleanText, lang: 'hi' })
+    });
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    btn.textContent = '🔊 Bol raha hai...';
+    audio.play();
+    audio.onended = () => {
+      btn.textContent = '🔊 Suno';
+      btn.disabled = false;
+    };
+  } catch(e) {
+    btn.textContent = '🔊 Suno';
+    btn.disabled = false;
+  }
+}
+
+
+
+
+ let currentUtterance = null;
+let isSpeaking = false;
+
+async function speakText(btn, text) {
+  const cleanText = text.replace(/<[^>]*>/g, '').trim();
+
+  // Agar pehle se bol raha hai — pause karo
+  if (isSpeaking) {
+    window.speechSynthesis.pause();
+    isSpeaking = false;
+    btn.textContent = '▶️ Resume';
+    return;
+  }
+
+  // Agar paused hai — resume karo
+  if (window.speechSynthesis.paused) {
+    window.speechSynthesis.resume();
+    isSpeaking = true;
+    btn.textContent = '⏸️ Pause';
+    return;
+  }
+
+  // Naya start karo
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = 'hi-IN';
+  utterance.rate = 0.9;
+  currentUtterance = utterance;
+
+  btn.textContent = '⏸️ Pause';
+  isSpeaking = true;
+
+  utterance.onend = () => {
+    btn.textContent = '🔊 Suno';
+    isSpeaking = false;
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+
+
+
+
 </script>
 {% endblock %}

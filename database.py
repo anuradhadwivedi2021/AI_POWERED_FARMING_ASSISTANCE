@@ -14,6 +14,22 @@ class User(UserMixin, db.Model):
     language = db.Column(db.String(10), default='en')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # ── FARMER PROFILE FIELDS ──────────────────────────
+    farm_location        = db.Column(db.String(150))   # farm ka address/village
+    farm_latitude         = db.Column(db.Float)
+    farm_longitude         = db.Column(db.Float)
+    land_size             = db.Column(db.Float)          # acres mein
+    current_crop           = db.Column(db.String(100))
+    crop_stage             = db.Column(db.String(50))    # e.g. Sowing / Growing / Harvest
+    soil_type               = db.Column(db.String(50))
+    irrigation_available   = db.Column(db.Boolean, default=False)
+    preferred_language     = db.Column(db.String(10), default='hi')  # hi / mr / en
+
+    # ── MONETIZATION (future use, abhi sirf field ready) ──
+    plan = db.Column(db.String(20), default='free')      # free / premium
+
+    profile_updated_at = db.Column(db.DateTime)
+
 class CropHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

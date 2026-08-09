@@ -72,6 +72,9 @@
 }
 .search-btn:hover { transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.2); }
 
+
+
+
 /* ── LOADING ── */
 .loading-wrap {
   background: white;
@@ -343,6 +346,11 @@
       <button class="search-btn" onclick="getWeather()">
         🔍 Get Weather
       </button>
+
+      <button class="search-btn" onclick="sendWeatherSMS()" id="smsBtn"
+  style="background:linear-gradient(135deg,#40916c,#2d6a4f);color:white;">
+  📱 SMS Alert
+</button>
     </div>
   </div>
 
@@ -590,5 +598,79 @@ window.onload = () => {
   const city = document.getElementById('cityInput').value;
   if (city) getWeather();
 };
+
+
+
+
+
+
+async function sendWeatherSMS() {
+  const btn = document.getElementById('smsBtn');
+  const city = document.getElementById('cityInput').value.trim();
+  
+  if (!city) {
+    showToast('Pehle city search karo!', 'error');
+    return;
+  }
+
+  btn.textContent = '⏳ Sending...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/send_weather_alert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ city: city })
+    });
+    const data = await res.json();
+
+    if (data.status === 'ok') {
+      showToast('✅ SMS sent successfully!', 'success');
+      btn.textContent = '✅ SMS Sent!';
+      setTimeout(() => {
+        btn.textContent = '📱 SMS Alert';
+        btn.disabled = false;
+      }, 3000);
+    } else {
+      showToast('❌ ' + data.error, 'error');
+      btn.textContent = '📱 SMS Alert';
+      btn.disabled = false;
+    }
+  } catch(e) {
+    showToast('❌ Connection error!', 'error');
+    btn.textContent = '📱 SMS Alert';
+    btn.disabled = false;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </script>
 {% endblock %}

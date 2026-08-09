@@ -1,15 +1,17 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, Response
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
 from config import Config
 from database import db, User, CropHistory, ExpenseRecord, PestDetection
+from translations import get_translator, LANGUAGES
 import os
 import json
 import base64
 import pickle
+import io
+from datetime import datetime
 import pandas as pd
 import google.generativeai as genai
-
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -25,6 +27,63 @@ login_manager.login_message = 'Pehle login karo!'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# ─── LANGUAGE SETUP ──────────────────────────────────
+def get_current_language():
+    """
+    Priority: logged-in user ka saved preference > session (guest ke liye) > default 'hi'
+    """
+    if current_user.is_authenticated and current_user.preferred_language:
+        return current_user.preferred_language
+    return session.get('lang', 'hi')
+
+@app.context_processor
+def inject_translator():
+    lang = get_current_language()
+    return dict(t=get_translator(lang), current_lang=lang, available_languages=LANGUAGES)
+
+@app.route('/set-language/<lang>')
+def set_language(lang):
+    if lang not in ('hi', 'mr', 'en'):
+        lang = 'hi'
+    session['lang'] = lang
+    if current_user.is_authenticated:
+        current_user.preferred_language = lang
+        db.session.commit()
+    # Jis page se aaye the wahi wapas bhej do
+    next_page = request.referrer or url_for('index')
+    return redirect(next_page)
+
+# ─── TEXT-TO-SPEECH (सुनें) ──────────────────────────
+@app.route('/api/tts', methods=['POST'])
+def api_tts():
+    """
+    Kisi bhi text ko audio (mp3) mein convert karke bhejta hai.
+    Frontend se: fetch('/api/tts', {method:'POST', body: JSON {text, lang}})
+    """
+    try:
+        from gtts import gTTS
+        data = request.get_json(force=True)
+        text = (data.get('text') or '').strip()
+        lang = data.get('lang', get_current_language())
+
+        if not text:
+            return jsonify({'error': 'Text khaali hai'}), 400
+
+        # gTTS language codes: hi, mr, en
+        gtts_lang = lang if lang in ('hi', 'mr', 'en') else 'hi'
+
+        tts = gTTS(text=text, lang=gtts_lang)
+        buf = io.BytesIO()
+        tts.write_to_fp(buf)
+        buf.seek(0)
+
+        return Response(buf.read(), mimetype='audio/mpeg')
+
+    except Exception as e:
+        print(f"⚠️ TTS error: {e}")
+        return jsonify({'error': 'Awaaz banane mein dikkat aayi, dobara try karo.'}), 500
+
+ 
 with app.app_context():
     db.create_all()
 
@@ -39,9 +98,9 @@ try:
     print(f"✅ ML Model loaded! Accuracy: {crop_info['accuracy']*100:.2f}%")
 except Exception as e:
     print(f"⚠️ ML Model not loaded: {e}")
-    crop_model    = None
-    label_encoder = None
-    crop_info     = None
+    crop_model     = None
+    label_encoder  = None
+    crop_info      = None
 
 # ─── HOME ───────────────────────────────────────────
 @app.route('/')
@@ -107,6 +166,38 @@ def dashboard():
     return render_template('dashboard.html', user=current_user,
                            expenses=expenses, crops=crops,
                            total_expense=total_expense)
+
+# ─── FARMER PROFILE ─────────────────────────────────
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        current_user.name       = request.form.get('name', current_user.name)
+        current_user.phone      = request.form.get('phone')
+        current_user.location   = request.form.get('location')
+
+        current_user.preferred_language   = request.form.get('preferred_language', 'hi')
+        current_user.farm_location        = request.form.get('farm_location')
+        current_user.current_crop         = request.form.get('current_crop')
+        current_user.crop_stage           = request.form.get('crop_stage')
+        current_user.soil_type            = request.form.get('soil_type')
+        current_user.irrigation_available = request.form.get('irrigation_available') == 'on'
+
+        land_size = request.form.get('land_size')
+        current_user.land_size = float(land_size) if land_size else None
+
+        lat = request.form.get('farm_latitude')
+        lng = request.form.get('farm_longitude')
+        current_user.farm_latitude  = float(lat) if lat else None
+        current_user.farm_longitude = float(lng) if lng else None
+
+        current_user.profile_updated_at = datetime.utcnow()
+
+        db.session.commit()
+        flash('Profile update ho gaya! ✅', 'success')
+        return redirect(url_for('profile'))
+
+    return render_template('profile.html', user=current_user)
 
 # ─── WEATHER ────────────────────────────────────────
 @app.route('/weather')
@@ -240,6 +331,7 @@ def api_ml_crop():
             'Consult local agriculture department for specific doses'
         )
 
+        # Save to database
         record = CropHistory(
             user_id   = current_user.id,
             crop_name = crop_name,
@@ -272,7 +364,7 @@ def api_chat():
     try:
         gemini_key = os.environ.get('GEMINI_API_KEY', '')
         genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        model = genai.GenerativeModel('gemini-2.5-flash')
 
         prompt = f"""You are CropSense AI — an expert Indian farming assistant.
 
@@ -320,7 +412,7 @@ def api_detect_pest():
     try:
         gemini_key = os.environ.get('GEMINI_API_KEY', '')
         genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        model = genai.GenerativeModel('gemini-2.5-flash')
 
         img_bytes = file.read()
         img_b64   = base64.b64encode(img_bytes).decode()
@@ -372,5 +464,71 @@ Respond ONLY in this exact JSON format (no markdown, no extra text):
             'prevention':  '<p>• Dobara try karo</p>'
         })
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=7860)
+
+
+# ─── TTS API ─────────────────────────────────────────
+# ─── SMS WEATHER ALERT API ───────────────────────────
+@app.route('/api/send_weather_alert', methods=['POST'])
+@login_required
+def send_weather_alert():
+    try:
+        from twilio.rest import Client
+        import requests
+
+        data     = request.get_json()
+        city     = data.get('city', current_user.location or 'Pune')
+        user     = current_user
+
+        if not user.phone:
+            return jsonify({'error': 'Phone number not found! Profile update karo.'}), 400
+
+        weather_key = os.environ.get('WEATHER_API_KEY', '')
+        weather_url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={weather_key}&units=metric'
+        weather_res = requests.get(weather_url).json()
+
+        temp        = round(weather_res['main']['temp'])
+        humidity    = weather_res['main']['humidity']
+        description = weather_res['weather'][0]['description']
+        city_name   = weather_res['name']
+
+        message = f"""🌾 CropSense Weather Alert!
+Namaste {user.name}! 👋
+
+📍 Location: {city_name}
+🌡️ Temperature: {temp}°C
+💧 Humidity: {humidity}%
+🌤️ Weather: {description}
+
+🌱 Farming Tip:
+{"Aaj irrigation ki zaroorat nahi - barish ho rahi hai!" if "rain" in description.lower() else "Aaj irrigation karo - accha din hai!"}
+
+- CropSense AI
+https://ai-powered-farming-assistance.onrender.com"""
+
+        account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
+        auth_token  = os.environ.get('TWILIO_AUTH_TOKEN')
+        from_number = os.environ.get('TWILIO_PHONE')
+
+        client = Client(account_sid, auth_token)
+        client.messages.create(
+            body=message,
+            from_=from_number,
+            to=f'+91{user.phone}'
+        )
+
+        return jsonify({'status': 'ok', 'message': 'SMS sent!'})
+
+    except Exception as e:
+        print(f"SMS ERROR: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    app.run(debug=True)

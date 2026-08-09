@@ -170,3 +170,57 @@ document.querySelectorAll('.stat-info h3').forEach(el => {
     animateNumber(el, num);
   }
 });
+
+// ── TEXT-TO-SPEECH ("सुनें" button) ────────────────
+// Usage in any template:
+// <button class="btn btn-outline speak-btn" data-text="जो bhi text bolna hai">🔊 सुनें</button>
+let currentAudio = null;
+
+async function speakText(text, btn) {
+  if (!text || !text.trim()) return;
+
+  // Agar already koi audio play ho raha hai, use rok do
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+
+  const originalHTML = btn ? btn.innerHTML : null;
+  if (btn) {
+    btn.innerHTML = '⏳ ...';
+    btn.disabled  = true;
+  }
+
+  try {
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text })
+    });
+
+    if (!res.ok) throw new Error('TTS failed');
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    currentAudio = new Audio(url);
+    currentAudio.play();
+
+    currentAudio.onended = () => {
+      if (btn) { btn.innerHTML = originalHTML; btn.disabled = false; }
+    };
+  } catch (err) {
+    console.error('TTS error:', err);
+    if (btn) { btn.innerHTML = originalHTML; btn.disabled = false; }
+    showToast('आवाज़ चलाने में दिक्कत आई, दोबारा try करें।', 'error');
+  }
+}
+
+// Har page pe .speak-btn class wale saare buttons auto-wire ho jaayenge
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.speak-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = btn.dataset.text || btn.closest('[data-speak-text]')?.dataset.speakText || '';
+      speakText(text, btn);
+    });
+  });
+});
