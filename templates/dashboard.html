@@ -51,6 +51,7 @@
 }
 .welcome-name span { color:#74c69d; }
 .welcome-sub { font-size:0.88rem;color:rgba(255,255,255,0.65); }
+.welcome-sub a { font-weight:700; text-decoration:underline; }
 .welcome-right {
   display:flex;
   flex-direction:column;
@@ -154,6 +155,34 @@
   text-decoration:none;
 }
 .section-link:hover { text-decoration:underline; }
+
+/* ── MY FARM CARD ── */
+.farm-card {
+  background:white;
+  border-radius:20px;
+  border:1.5px solid #e8f5e9;
+  padding:1.5rem;
+  margin-bottom:1.5rem;
+}
+.farm-card-title {
+  font-size:0.95rem;
+  font-weight:800;
+  color:#0a2e1a;
+  margin-bottom:1rem;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.farm-grid {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1rem;
+  margin-bottom:0.75rem;
+}
+.farm-item { font-size:0.85rem; color:#1b4332; }
+.farm-item strong { display:block; font-size:0.68rem; color:#52796f; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; margin-bottom:3px; }
+.farm-edit-link { font-size:0.78rem; color:#2d6a4f; font-weight:600; text-decoration:none; }
+.farm-edit-link:hover { text-decoration:underline; }
 
 /* ── QUICK ACCESS ── */
 .quick-grid {
@@ -370,11 +399,13 @@
   .stats-row { grid-template-columns:repeat(2,1fr); }
   .quick-grid { grid-template-columns:1fr 1fr; }
   .bottom-grid { grid-template-columns:1fr; }
+  .farm-grid { grid-template-columns:repeat(2,1fr); }
 }
 @media(max-width:600px){
   .stats-row { grid-template-columns:1fr 1fr; }
   .quick-grid { grid-template-columns:1fr; }
   .welcome-right { display:none; }
+  .farm-grid { grid-template-columns:1fr 1fr; }
 }
 </style>
 {% endblock %}
@@ -390,7 +421,12 @@
         Welcome back, <span>{{ user.name.split()[0] }}!</span>
       </div>
       <div class="welcome-sub">
-        Here's your farm overview for today — stay smart, farm better.
+        {% if user.current_crop %}
+          🌱 Farming <strong>{{ user.current_crop }}</strong>{% if user.crop_stage %} — {{ user.crop_stage }} stage{% endif %}
+        {% else %}
+          Apna crop profile me set karo — better advice paane ke liye.
+          <a href="{{ url_for('profile') }}" style="color:#74c69d;">Complete Profile →</a>
+        {% endif %}
       </div>
     </div>
     <div class="welcome-right">
@@ -422,7 +458,7 @@
       <div class="stat-box-icon">📍</div>
       <div>
         <div class="stat-box-val" style="font-size:1rem;">
-          {{ user.location or 'Not Set' }}
+          {{ user.farm_location or user.location or 'Not Set' }}
         </div>
         <div class="stat-box-lbl">Your Location</div>
       </div>
@@ -435,6 +471,20 @@
       </div>
     </div>
   </div>
+
+  <!-- My Farm at a Glance -->
+  {% if user.current_crop or user.soil_type or user.land_size %}
+  <div class="farm-card">
+    <div class="farm-card-title">🌾 My Farm at a Glance</div>
+    <div class="farm-grid">
+      <div class="farm-item"><strong>Crop</strong>{{ user.current_crop or 'Not set' }}</div>
+      <div class="farm-item"><strong>Stage</strong>{{ user.crop_stage or 'Not set' }}</div>
+      <div class="farm-item"><strong>Soil</strong>{{ user.soil_type or 'Not set' }}</div>
+      <div class="farm-item"><strong>Irrigation</strong>{{ 'Available' if user.irrigation_available else 'Not available' }}</div>
+    </div>
+    <a href="{{ url_for('profile') }}" class="farm-edit-link">✏️ Edit farm details</a>
+  </div>
+  {% endif %}
 
   <!-- Quick Access -->
   <div class="section-head">
@@ -514,7 +564,7 @@
           <div class="profit-field">
             <label class="profit-label">📐 Land (Acres)</label>
             <input type="number" id="profitAcres" class="profit-input"
-                   placeholder="e.g. 2" value="1" min="0.1" step="0.1"/>
+                   placeholder="e.g. 2" value="{{ user.land_size or 1 }}" min="0.1" step="0.1"/>
           </div>
           <div class="profit-field">
             <label class="profit-label">💰 Total Cost (₹)</label>

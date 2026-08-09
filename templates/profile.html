@@ -1,26 +1,111 @@
 {% extends "base.html" %}
 {% block title %}👤 My Profile — CropSense AI{% endblock %}
 
+{% block extra_css %}
+<style>
+  .profile-header-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .profile-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark, #1b4332));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(45,106,79,0.3);
+  }
+  .sidebar-divider {
+    height: 1px;
+    background: rgba(45,106,79,0.15);
+    border: none;
+    width: 100%;
+  }
+  .field-hint {
+    font-size: 0.76rem;
+    color: #6b8f7a;
+    margin-top: 0.25rem;
+  }
+  .location-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+  }
+  .location-row .form-group { flex: 1; margin-bottom: 0; }
+  .btn-locate {
+    white-space: nowrap;
+    margin-top: 1.85rem;
+    padding: 0.62rem 1rem;
+    font-size: 0.82rem;
+  }
+  .geo-status {
+    font-size: 0.76rem;
+    margin-top: 0.3rem;
+    min-height: 1em;
+  }
+  .geo-status.ok    { color: #2d6a4f; }
+  .geo-status.err   { color: #e63946; }
+  .geo-status.pending { color: #856404; }
+  .form-control.invalid {
+    border-color: #e63946 !important;
+  }
+  .field-error {
+    font-size: 0.76rem;
+    color: #e63946;
+    margin-top: 0.25rem;
+    display: none;
+  }
+  .unsaved-badge {
+    display: none;
+    font-size: 0.75rem;
+    background: #fff3cd;
+    color: #856404;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    margin-left: 0.6rem;
+    font-weight: 500;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
-  <h1>👤 My Farmer Profile</h1>
-  <p>Yeh jaankari bharo taaki AI tumhe better personalized advice de sake.</p>
+  <div class="profile-header-row">
+    <div class="profile-avatar">{{ (user.name or '?')[0]|upper }}</div>
+    <div>
+      <h1 style="margin:0;">👤 My Farmer Profile</h1>
+      <p style="margin:0;">Yeh jaankari bharo taaki AI tumhe better personalized advice de sake.</p>
+    </div>
+    <span class="unsaved-badge" id="unsavedBadge">Unsaved changes</span>
+  </div>
 </div>
 
 <div class="card" style="max-width: 720px;">
-  <form method="POST" action="{{ url_for('profile') }}">
+  <form method="POST" action="{{ url_for('profile') }}" id="profileForm" novalidate>
 
     <div class="card-title" style="margin-top:0;">🧑 Basic Info</div>
     <div class="grid-2">
       <div class="form-group">
         <label>Name</label>
-        <input type="text" name="name" class="form-control"
+        <input type="text" name="name" id="name" class="form-control"
                value="{{ user.name or '' }}" required>
+        <div class="field-error" id="nameError">Naam zaroori hai.</div>
       </div>
       <div class="form-group">
         <label>Phone</label>
-        <input type="text" name="phone" class="form-control"
-               value="{{ user.phone or '' }}" placeholder="10-digit mobile number">
+        <input type="text" name="phone" id="phone" class="form-control"
+               value="{{ user.phone or '' }}" placeholder="10-digit mobile number"
+               inputmode="numeric" maxlength="10">
+        <div class="field-error" id="phoneError">Sahi 10-digit mobile number daalo.</div>
       </div>
     </div>
 
@@ -40,28 +125,36 @@
       </div>
     </div>
 
-    <div class="sidebar-divider" style="margin: 1.5rem 0;"></div>
+    <hr class="sidebar-divider" style="margin: 1.5rem 0;">
 
     <div class="card-title">🌾 Farm Details</div>
-    <div class="grid-2">
+
+    <div class="location-row">
       <div class="form-group">
         <label>Farm Location / Address</label>
-        <input type="text" name="farm_location" class="form-control"
+        <input type="text" name="farm_location" id="farm_location" class="form-control"
                value="{{ user.farm_location or '' }}" placeholder="Khet ka address ya village">
+        <div class="geo-status" id="geoStatus"></div>
       </div>
-      <div class="form-group">
-        <label>Land Size (acres)</label>
-        <input type="number" step="0.1" name="land_size" class="form-control"
-               value="{{ user.land_size or '' }}" placeholder="e.g. 2.5">
-      </div>
+      <button type="button" class="btn btn-outline btn-locate" id="locateBtn">
+        📍 Use my location
+      </button>
     </div>
 
-    <div class="grid-2">
+    <div class="grid-2" style="margin-top:1.2rem;">
+      <div class="form-group">
+        <label>Land Size (acres)</label>
+        <input type="number" step="0.1" min="0" name="land_size" class="form-control"
+               value="{{ user.land_size or '' }}" placeholder="e.g. 2.5">
+      </div>
       <div class="form-group">
         <label>Current Crop</label>
         <input type="text" name="current_crop" class="form-control"
                value="{{ user.current_crop or '' }}" placeholder="e.g. Soybean, Wheat">
       </div>
+    </div>
+
+    <div class="grid-2">
       <div class="form-group">
         <label>Crop Stage</label>
         <select name="crop_stage" class="form-control">
@@ -71,9 +164,6 @@
           {% endfor %}
         </select>
       </div>
-    </div>
-
-    <div class="grid-2">
       <div class="form-group">
         <label>Soil Type</label>
         <select name="soil_type" class="form-control">
@@ -83,21 +173,22 @@
           {% endfor %}
         </select>
       </div>
-      <div class="form-group" style="display:flex; align-items:center; margin-top:1.8rem;">
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-          <input type="checkbox" name="irrigation_available"
-                 {% if user.irrigation_available %}checked{% endif %}
-                 style="width:18px; height:18px;">
-          💧 Irrigation available hai
-        </label>
-      </div>
     </div>
 
-    <!-- Hidden fields — Smart Field mode baad mein isko browser location se bharega -->
+    <div class="form-group" style="display:flex; align-items:center;">
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0;">
+        <input type="checkbox" name="irrigation_available" id="irrigation_available"
+               {% if user.irrigation_available %}checked{% endif %}
+               style="width:18px; height:18px;">
+        💧 Irrigation available hai
+      </label>
+    </div>
+
+    <!-- Smart Field mode: filled automatically by geolocation JS below -->
     <input type="hidden" name="farm_latitude" id="farm_latitude" value="{{ user.farm_latitude or '' }}">
     <input type="hidden" name="farm_longitude" id="farm_longitude" value="{{ user.farm_longitude or '' }}">
 
-    <button type="submit" class="btn btn-primary" style="margin-top:1rem;">
+    <button type="submit" class="btn btn-primary" id="saveBtn" style="margin-top:1rem;">
       💾 Save Profile
     </button>
 
@@ -108,4 +199,110 @@
     {% endif %}
   </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form         = document.getElementById('profileForm');
+  const saveBtn       = document.getElementById('saveBtn');
+  const unsavedBadge  = document.getElementById('unsavedBadge');
+  const nameInput     = document.getElementById('name');
+  const phoneInput    = document.getElementById('phone');
+  const locateBtn     = document.getElementById('locateBtn');
+  const geoStatus     = document.getElementById('geoStatus');
+  const farmLocation  = document.getElementById('farm_location');
+  const latField      = document.getElementById('farm_latitude');
+  const lngField       = document.getElementById('farm_longitude');
+
+  // ── Unsaved-changes indicator ──────────────────
+  let dirty = false;
+  form.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', () => {
+      dirty = true;
+      unsavedBadge.style.display = 'inline-block';
+    });
+  });
+  window.addEventListener('beforeunload', (e) => {
+    if (dirty) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  // ── Phone number live validation (10-digit) ────
+  phoneInput.addEventListener('input', () => {
+    phoneInput.value = phoneInput.value.replace(/\D/g, '').slice(0, 10);
+    validatePhone();
+  });
+  function validatePhone() {
+    const val = phoneInput.value.trim();
+    const ok  = val === '' || /^[6-9]\d{9}$/.test(val);
+    phoneInput.classList.toggle('invalid', !ok);
+    document.getElementById('phoneError').style.display = ok ? 'none' : 'block';
+    return ok;
+  }
+
+  function validateName() {
+    const ok = nameInput.value.trim().length > 0;
+    nameInput.classList.toggle('invalid', !ok);
+    document.getElementById('nameError').style.display = ok ? 'none' : 'block';
+    return ok;
+  }
+
+  // ── 📍 Use my location (Smart Field mode prep) ─
+  locateBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      geoStatus.textContent = 'Is browser me location support nahi hai.';
+      geoStatus.className   = 'geo-status err';
+      return;
+    }
+    geoStatus.textContent = '📡 Location dhoondh rahe hai...';
+    geoStatus.className   = 'geo-status pending';
+    locateBtn.disabled    = true;
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        latField.value = latitude.toFixed(6);
+        lngField.value = longitude.toFixed(6);
+        geoStatus.textContent = `✅ Location mil gayi (${latitude.toFixed(3)}, ${longitude.toFixed(3)})`;
+        geoStatus.className   = 'geo-status ok';
+        locateBtn.disabled    = false;
+        dirty = true;
+        unsavedBadge.style.display = 'inline-block';
+        if (typeof showToast === 'function') {
+          showToast('Location capture ho gayi! Ab Save Profile dabao.', 'success');
+        }
+      },
+      (err) => {
+        geoStatus.textContent = '❌ Location nahi mil paayi. Permission check karo.';
+        geoStatus.className   = 'geo-status err';
+        locateBtn.disabled    = false;
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+
+  // ── Submit: validate + loading state ───────────
+  form.addEventListener('submit', (e) => {
+    const nameOk  = validateName();
+    const phoneOk = validatePhone();
+    if (!nameOk || !phoneOk) {
+      e.preventDefault();
+      if (typeof showToast === 'function') {
+        showToast('Form me kuch fields sahi nahi hai, check karo.', 'error');
+      }
+      return;
+    }
+    dirty = false;
+    if (typeof setLoading === 'function') {
+      setLoading(saveBtn, true, 'Saving...');
+    } else {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '⏳ Saving...';
+    }
+  });
+});
+</script>
 {% endblock %}
