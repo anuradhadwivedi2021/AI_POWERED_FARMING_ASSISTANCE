@@ -269,10 +269,19 @@
     </a>
 
     <div class="sidebar-section">Farming Tools</div>
+    <a href="{{ url_for('smart_field') }}"
+       class="sidebar-item {% if request.endpoint=='smart_field' %}active{% endif %}">
+      <span class="icon">🚜</span> Smart Field
+    </a>
     <a href="{{ url_for('weather') }}"
        class="sidebar-item {% if request.endpoint=='weather' %}active{% endif %}">
       <span class="icon">🌤️</span> Weather
     </a>
+    <a href="{{ url_for('crop') }}"
+       class="sidebar-item {% if request.endpoint=='crop' %}active{% endif %}">
+      <span class="icon">🌱</span> Crop Guide
+    </a>
+    ...
     <a href="{{ url_for('crop') }}"
        class="sidebar-item {% if request.endpoint=='crop' %}active{% endif %}">
       <span class="icon">🌱</span> Crop Guide

@@ -208,6 +208,15 @@ def weather():
                            user=current_user,
                            weather_key=weather_key)
 
+                           # ─── SMART FIELD MODE ───────────────────────────────
+@app.route('/smart-field')
+@login_required
+def smart_field():
+    weather_key = os.environ.get('WEATHER_API_KEY', '')
+    return render_template('smart_field.html',
+                           user=current_user,
+                           weather_key=weather_key)
+
 # ─── CROP ───────────────────────────────────────────
 @app.route('/crop', methods=['GET', 'POST'])
 @login_required

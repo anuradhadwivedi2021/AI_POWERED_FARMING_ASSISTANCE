@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% block title %}Smart Field — CropSense AI{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+.sf-page { font-family:'Inter',sans-serif; }
+
+/* ── HERO ── */
+.sf-hero {
+  background: linear-gradient(135deg, #0a2e1a, #1b4332, #2d6a4f);
+  border-radius: 24px;
+  padding: 2rem 2.5rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.sf-hero::before {
+  content:'🚜';
+  position:absolute;
+  font-size:10rem;
+  right:-1rem;top:-2rem;
+  opacity:0.06;
+}
+.sf-hero-title { font-size:1.5rem;font-weight:900;color:white;margin-bottom:0.3rem;letter-spacing:-0.5px; }
+.sf-hero-sub   { font-size:0.85rem;color:rgba(255,255,255,0.65);margin-bottom:1.3rem; }
+.sf-locate-btn {
+  padding: 12px 24px;
+  background: white;
+  color: #1b4332;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sf-locate-btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,0.2); }
+.sf-locate-btn:disabled { opacity:0.7; cursor:not-allowed; }
+.sf-source-note { font-size:0.76rem;color:rgba(255,255,255,0.55);margin-top:0.6rem; }
+
+/* ── PROFILE NUDGE ── */
+.sf-nudge {
+  background:#fff3cd;
+  border:1.5px solid #f4a261;
+  border-radius:16px;
+  padding:1.2rem 1.5rem;
+  margin-bottom:1.5rem;
+  color:#856404;
+  font-size:0.88rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+}
+.sf-nudge a { color:#2d6a4f;font-weight:700;text-decoration:underline;white-space:nowrap; }
+
+/* ── LOADING / EMPTY ── */
+.sf-status { text-align:center;padding:2.5rem;color:#52796f; }
+.sf-status .big { font-size:2.5rem;margin-bottom:0.75rem; }
+
+/* ── CONDITIONS ROW ── */
+.sf-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem; }
+.sf-box {
+  background:white;border-radius:18px;padding:1.2rem 1.4rem;
+  border:1.5px solid #e8f5e9;display:flex;align-items:center;gap:1rem;
+}
+.sf-box-icon { width:50px;height:50px;border-radius:14px;background:#d8f3dc;
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0; }
+.sf-box-val { font-size:1.3rem;font-weight:900;color:#0a2e1a;line-height:1; }
+.sf-box-lbl { font-size:0.72rem;color:#52796f;margin-top:3px;font-weight:500; }
+
+/* ── ADVICE CARD ── */
+.sf-advice-card {
+  background:linear-gradient(135deg,#0a2e1a,#1b4332,#2d6a4f);
+  border-radius:20px;
+  padding:1.8rem;
+  color:white;
+  margin-bottom:1.5rem;
+}
+.sf-advice-title { font-size:1rem;font-weight:800;margin-bottom:1rem;display:flex;align-items:center;gap:8px; }
+.sf-advice-item {
+  display:flex;align-items:flex-start;gap:10px;
+  background:rgba(255,255,255,0.08);
+  border-radius:12px;
+  padding:0.8rem 1rem;
+  margin-bottom:0.6rem;
+  font-size:0.88rem;
+  line-height:1.5;
+}
+.sf-advice-item:last-child { margin-bottom:0; }
+.sf-advice-dot { width:8px;height:8px;background:#74c69d;border-radius:50%;margin-top:6px;flex-shrink:0; }
+.sf-disclaimer {
+  font-size:0.74rem;
+  color:rgba(255,255,255,0.5);
+  margin-top:1rem;
+  border-top:1px solid rgba(255,255,255,0.1);
+  padding-top:0.8rem;
+}
+
+/* ── FARM CONTEXT CARD ── */
+.sf-context-card {
+  background:white;border-radius:20px;border:1.5px solid #e8f5e9;padding:1.5rem;
+}
+.sf-context-title { font-size:0.95rem;font-weight:800;color:#0a2e1a;margin-bottom:1rem; }
+.sf-context-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:1rem; }
+.sf-context-item { font-size:0.85rem;color:#1b4332; }
+.sf-context-item strong { display:block;font-size:0.68rem;color:#52796f;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:3px; }
+
+@media(max-width:900px){
+  .sf-grid { grid-template-columns:repeat(2,1fr); }
+  .sf-context-grid { grid-template-columns:repeat(2,1fr); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sf-page">
+
+  <!-- Hero -->
+  <div class="sf-hero">
+    <div class="sf-hero-title">🚜 Smart Field Mode</div>
+    <div class="sf-hero-sub">Apne khet ki live location se aaj ka farming advice paayein</div>
+    <button class="sf-locate-btn" id="locateBtn" onclick="loadSmartField()">
+      📍 Mera Khet Check Karo
+    </button>
+    <div class="sf-source-note" id="sourceNote"></div>
+  </div>
+
+  {% if not user.current_crop %}
+  <div class="sf-nudge">
+    <span>⚠️ Better advice ke liye apna crop aur farm details profile me set karo.</span>
+    <a href="{{ url_for('profile') }}">Complete Profile →</a>
+  </div>
+  {% endif %}
+
+  <div id="sfEmpty" class="sf-status">
+    <div class="big">📍</div>
+    <div style="font-weight:700;color:#1b4332;margin-bottom:4px;">Abhi apne khet ki jaankari nahi li gayi</div>
+    <div>Upar wala button dabao — hum tumhare khet ki location aur mausam check karenge</div>
+  </div>
+
+  <div id="sfLoading" class="sf-status" style="display:none;">
+    <div class="big">📡</div>
+    <div style="font-weight:700;color:#1b4332;">Location aur mausam check kar rahe hai...</div>
+  </div>
+
+  <div id="sfError" class="sf-status" style="display:none;">
+    <div class="big">❌</div>
+    <div style="font-weight:700;color:#1b4332;margin-bottom:4px;">Location nahi mil paayi</div>
+    <div>Browser me location permission allow karo, ya profile me farm location set karo.</div>
+  </div>
+
+  <div id="sfResult" style="display:none;">
+
+    <!-- Conditions -->
+    <div class="sf-grid">
+      <div class="sf-box">
+        <div class="sf-box-icon" id="sfWeatherIcon">🌤️</div>
+        <div><div class="sf-box-val" id="sfTemp">--°C</div><div class="sf-box-lbl" id="sfDesc">--</div></div>
+      </div>
+      <div class="sf-box">
+        <div class="sf-box-icon">💧</div>
+        <div><div class="sf-box-val" id="sfHumidity">--%</div><div class="sf-box-lbl">Humidity</div></div>
+      </div>
+      <div class="sf-box">
+        <div class="sf-box-icon">💨</div>
+        <div><div class="sf-box-val" id="sfWind">-- km/h</div><div class="sf-box-lbl">Wind</div></div>
+      </div>
+      <div class="sf-box">
+        <div class="sf-box-icon">📍</div>
+        <div><div class="sf-box-val" style="font-size:0.95rem;" id="sfLocation">--</div><div class="sf-box-lbl">Field Location</div></div>
+      </div>
+    </div>
+
+    <!-- Advice -->
+    <div class="sf-advice-card">
+      <div class="sf-advice-title">🌾 आज खेत में क्या करें?</div>
+      <div id="sfAdviceList"></div>
+      <div class="sf-disclaimer">
+        ⚠️ Ye AI-generated suggestions hai, weather forecast aur tumhare crop data par based. Guaranteed fact nahi hai — apni judgement aur local conditions bhi dhyan me rakho.
+      </div>
+    </div>
+
+    <!-- Farm Context -->
+    <div class="sf-context-card">
+      <div class="sf-context-title">🌱 Tumhari Farm Details</div>
+      <div class="sf-context-grid">
+        <div class="sf-context-item"><strong>Crop</strong>{{ user.current_crop or 'Not set' }}</div>
+        <div class="sf-context-item"><strong>Stage</strong>{{ user.crop_stage or 'Not set' }}</div>
+        <div class="sf-context-item"><strong>Soil</strong>{{ user.soil_type or 'Not set' }}</div>
+        <div class="sf-context-item"><strong>Irrigation</strong>{{ 'Available' if user.irrigation_available else 'Not available' }}</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const SF_WEATHER_KEY = "{{ weather_key }}";
+const SF_CROP         = "{{ user.current_crop or '' }}";
+const SF_STAGE         = "{{ user.crop_stage or '' }}";
+const SF_IRRIGATION    = {{ 'true' if user.irrigation_available else 'false' }};
+const SF_SAVED_LAT     = "{{ user.farm_latitude or '' }}";
+const SF_SAVED_LNG     = "{{ user.farm_longitude or '' }}";
+
+const sfWeatherIcons = {
+  'Clear':'☀️','Clouds':'⛅','Rain':'🌧️',
+  'Drizzle':'🌦️','Thunderstorm':'⛈️','Snow':'❄️',
+  'Mist':'🌫️','Haze':'🌫️','Fog':'🌫️'
+};
+
+function showState(state) {
+  ['sfEmpty','sfLoading','sfError','sfResult'].forEach(id => {
+    document.getElementById(id).style.display = (id === state) ? 'block' : 'none';
+  });
+}
+
+function loadSmartField() {
+  const btn = document.getElementById('locateBtn');
+  btn.disabled = true;
+  showState('sfLoading');
+
+  if (SF_SAVED_LAT && SF_SAVED_LNG) {
+    document.getElementById('sourceNote').textContent = '📌 Profile me saved farm location use ho rahi hai.';
+    fetchWeatherAndAdvice(parseFloat(SF_SAVED_LAT), parseFloat(SF_SAVED_LNG));
+    btn.disabled = false;
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    showState('sfError');
+    btn.disabled = false;
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      document.getElementById('sourceNote').textContent = '📡 Live browser location use ho rahi hai.';
+      fetchWeatherAndAdvice(pos.coords.latitude, pos.coords.longitude);
+      btn.disabled = false;
+    },
+    () => {
+      showState('sfError');
+      btn.disabled = false;
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+async function fetchWeatherAndAdvice(lat, lon) {
+  try {
+    const res = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${SF_WEATHER_KEY}&units=metric`
+    );
+    if (!res.ok) throw new Error('Weather fetch failed');
+    const data = await res.json();
+
+    const main     = data.weather[0].main;
+    const temp     = Math.round(data.main.temp);
+    const humidity = data.main.humidity;
+    const wind     = Math.round(data.wind.speed * 3.6);
+    const rainSoon = !!data.rain || main === 'Rain' || main === 'Drizzle' || main === 'Thunderstorm';
+
+    document.getElementById('sfWeatherIcon').textContent = sfWeatherIcons[main] || '🌤️';
+    document.getElementById('sfTemp').textContent        = temp + '°C';
+    document.getElementById('sfDesc').textContent        = data.weather[0].description;
+    document.getElementById('sfHumidity').textContent    = humidity + '%';
+    document.getElementById('sfWind').textContent         = wind + ' km/h';
+    document.getElementById('sfLocation').textContent    = data.name || `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+
+    document.getElementById('sfAdviceList').innerHTML =
+      buildAdvice(main, temp, humidity, rainSoon).map(a => `
+        <div class="sf-advice-item"><div class="sf-advice-dot"></div><span>${a}</span></div>
+      `).join('');
+
+    showState('sfResult');
+    if (typeof showToast === 'function') showToast('Smart Field advice ready! 🚜', 'success');
+
+  } catch (e) {
+    showState('sfError');
+  }
+}
+
+function buildAdvice(weather, temp, humidity, rainSoon) {
+  const advice = [];
+  const cropTxt = SF_CROP ? `tumhari ${SF_CROP} crop ke liye` : 'tumhare khet ke liye';
+
+  // Irrigation-related, combining weather + irrigation availability
+  if (rainSoon) {
+    advice.push(`🌧️ Baarish ki sambhavna hai — ${cropTxt} abhi sinchai rokna behtar ho sakta hai.`);
+  } else if (temp > 35) {
+    advice.push(`🔥 Tez garmi hai — ${cropTxt} subah ya shaam ke waqt sinchai karo, dopahar me nahi.`);
+  } else if (!SF_IRRIGATION) {
+    advice.push(`💧 Irrigation available nahi hai tumhare profile me — mausam ke hisaab se paani ki planning zaroori hai.`);
+  } else {
+    advice.push(`💧 Aaj normal sinchai schedule follow kar sakte ho.`);
+  }
+
+  // Weather-specific field guidance
+  if (weather === 'Thunderstorm') {
+    advice.push('⛈️ Aaj khet me jaane se bacho — thunderstorm alert hai.');
+  } else if (weather === 'Rain' || weather === 'Drizzle') {
+    advice.push('🌱 Pesticide spray abhi mat karo — baarish usse dho degi.');
+  } else if (humidity > 80) {
+    advice.push('🐛 High humidity hai — fungal disease ka risk badh sakta hai, crop monitor karo.');
+  } else if (weather === 'Clear') {
+    advice.push('☀️ Saaf mausam hai — fertilizer application ya harvesting ke liye accha din hai.');
+  }
+
+  // Crop stage specific nudge
+  if (SF_STAGE === 'Flowering' && (weather === 'Rain' || temp > 38)) {
+    advice.push('🌼 Flowering stage me extreme weather se crop stress ho sakta hai — closely monitor karo.');
+  }
+  if (SF_STAGE === 'Harvest Ready' && rainSoon) {
+    advice.push('🌾 Crop harvest-ready hai aur baarish aa sakti hai — jaldi harvest karne ke baare me socho.');
+  }
+
+  advice.push('👨‍🌾 Yaqeen na ho to local krishi vibhag ya expert se salah zaroor lo.');
+  return advice;
+}
+</script>
+{% endblock %}
